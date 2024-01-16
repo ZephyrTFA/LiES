@@ -1,0 +1,11 @@
+{
+  "rust-analyzer.linkedProjects": [".\\Cargo.toml"],
+  "files.trimFinalNewlines": true,
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  }
+}

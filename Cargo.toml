@@ -1,0 +1,13 @@
+[package]
+name = "lies"     # Living In Eternal Slumber
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["parser"]
+parser = []
+
+[dependencies]
+log = "0.4.20"
+chrono = "0.4.31"
+regex = "1.10.2"
