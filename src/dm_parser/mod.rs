@@ -38,10 +38,9 @@ impl DmParser<'_> {
     pub fn load(&mut self, path: &str) -> Result<()> {
         let final_path = self
             .work_directory
-            .join(&self.preprocess_state.base_file_dir())
+            .join(self.preprocess_state.base_file_dir())
             .join(
-                &self
-                    .directory_traversal
+                self.directory_traversal
                     .last()
                     .unwrap_or(&PathBuf::from(".")),
             )

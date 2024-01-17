@@ -1,8 +1,10 @@
 use std::{
     collections::HashMap,
     io::{Error, Result},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
+
+use regex::Regex;
 
 use crate::is_verbose;
 
@@ -39,7 +41,7 @@ impl PreprocessState<'_> {
         DefineDefinition::new_basic_replace("FALSE", "0").insert_into_map(&mut defines);
         DefineDefinition::new_basic_replace("DM_VERSION", "515").insert_into_map(&mut defines);
         DefineDefinition::new_basic_replace("DM_BUILD", "1624").insert_into_map(&mut defines);
-        return defines;
+        defines
     }
 }
 
@@ -54,8 +56,7 @@ impl DmParser<'_> {
 
         // go through tokens and remove trailing split markers into their own tokens
         let mut final_tokens: Vec<&str> = vec![];
-        for i in 0..raw_split.len() {
-            let token = raw_split[i];
+        for token in raw_split.as_slice() {
             if token.len() == 1 {
                 final_tokens.push(token);
                 continue;
@@ -75,15 +76,32 @@ impl DmParser<'_> {
         let mut processed_tokens: Vec<String> = vec![];
         let mut in_string = false;
         // go through tokens and combine tokens which should be combined. (strings, etc)
-        for idx in 0..final_tokens.len() {
-            let token = final_tokens[idx];
-
+        for (idx, token) in final_tokens.iter().enumerate() {
             match token.chars().next().unwrap() {
+                '*' => {
+                    if idx != 0 {
+                        let mut last = processed_tokens.pop().unwrap();
+                        if last.ends_with(&['*', '/']) {
+                            last.push_str(token);
+                            processed_tokens.push(last);
+                        } else {
+                            processed_tokens.push(last);
+                            processed_tokens.push(token.to_string());
+                        }
+                    } else {
+                        processed_tokens.push(token.to_string());
+                    }
+                }
                 '/' => {
                     if idx != 0 {
                         let mut last = processed_tokens.pop().unwrap();
-                        last.push_str(token);
-                        processed_tokens.push(last);
+                        if last.ends_with(&['*', '/']) {
+                            last.push_str(token);
+                            processed_tokens.push(last);
+                        } else {
+                            processed_tokens.push(last);
+                            processed_tokens.push(token.to_string());
+                        }
                     } else {
                         processed_tokens.push(token.to_string());
                     }
@@ -93,8 +111,7 @@ impl DmParser<'_> {
                     processed_tokens.push(token.to_string());
                 }
                 _ => {
-                    if in_string && processed_tokens.last().unwrap().chars().next().unwrap() != '"'
-                    {
+                    if in_string && !processed_tokens.last().unwrap().starts_with('\"') {
                         let mut last = processed_tokens.pop().unwrap();
                         last.push_str(token);
                         processed_tokens.push(last);
@@ -108,7 +125,7 @@ impl DmParser<'_> {
         processed_tokens
     }
 
-    pub(super) fn preprocess(&mut self, path: &PathBuf, lines: Vec<String>) -> Result<Vec<String>> {
+    pub(super) fn preprocess(&mut self, path: &Path, lines: Vec<String>) -> Result<Vec<String>> {
         if path.extension().unwrap() == "dmm" {
             return Ok(lines);
         }
@@ -133,8 +150,8 @@ impl DmParser<'_> {
                     continue 'main_loop;
                 }
 
-                if self.preprocess_state.skip_until_token_matches.is_some() {
-                    if token.processed == self.preprocess_state.skip_until_token_matches.unwrap() {
+                if let Some(re) = self.preprocess_state.skip_until_token_matches {
+                    if Regex::new(re).unwrap().is_match(&token.processed) {
                         self.preprocess_state.skip_until_token_matches = None;
                     }
                     continue 'main_loop;
@@ -154,11 +171,12 @@ impl DmParser<'_> {
                 continue;
             }
 
-            if processed_line[0].processed.starts_with("#") {
+            if processed_line[0].processed.starts_with('#') {
                 let result =
                     self.parse_preprocessor_directive(&processed_line[0], &processed_line[1..]);
-                if result.is_err() {
-                    return Err(result.unwrap_err());
+                match result.is_err() {
+                    true => return Err(result.unwrap_err()),
+                    false => (),
                 }
                 continue;
             }
@@ -247,7 +265,7 @@ impl DmParser<'_> {
         tokens: &[TokenStore],
     ) -> Result<()> {
         let directive = &directive.processed;
-        if !directive.starts_with("#") {
+        if !directive.starts_with('#') {
             return Err(Error::new(
                 std::io::ErrorKind::InvalidInput,
                 "not a preprocessor directive",
@@ -313,7 +331,7 @@ impl DmParser<'_> {
                 }
                 DefineDefinition::new_basic_replace(name, body)
                     .insert_into_map(&mut self.preprocess_state.defines);
-                return Ok(());
+                Ok(())
             }
         }
     }

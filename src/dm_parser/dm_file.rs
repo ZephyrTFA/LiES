@@ -14,7 +14,7 @@ impl DmFile {
 
     fn load_lines(path: &PathBuf) -> Result<Vec<String>> {
         let raw: String = std::fs::read_to_string(path)?;
-        let lines: Vec<String> = raw.lines().map(|line| Self::sanitize_line(line)).collect();
+        let lines: Vec<String> = raw.lines().map(Self::sanitize_line).collect();
         Ok(lines)
     }
 

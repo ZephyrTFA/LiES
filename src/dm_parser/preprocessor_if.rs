@@ -43,9 +43,9 @@ impl DmParser<'_> {
     pub fn parse_preprocessor_if(&mut self, tokens: &[TokenStore]) -> Result<()> {
         let mut last_len = tokens.len();
         let mut process_chain: Vec<TokenStore> = tokens
-            .to_vec()
-            .into_iter()
+            .iter()
             .filter(|token| !token.processed.is_empty())
+            .cloned()
             .collect();
 
         while last_len != 1 {
