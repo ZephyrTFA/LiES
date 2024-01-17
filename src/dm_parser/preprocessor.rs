@@ -11,7 +11,6 @@ use super::{define_definition::DefineDefinition, token_store::TokenStore};
 use super::DmParser;
 
 pub struct PreprocessState<'a> {
-    pub base_file_dir: PathBuf,
     pub defines: HashMap<String, DefineDefinition>,
     pub skip_until_token_matches: Option<&'a str>,
     pub skip_levels: usize,
@@ -20,15 +19,18 @@ pub struct PreprocessState<'a> {
 impl PreprocessState<'_> {
     pub fn new() -> Self {
         Self {
-            base_file_dir: PathBuf::new(),
             defines: Self::populate_initial_defines(),
             skip_until_token_matches: None,
             skip_levels: 0,
         }
     }
 
-    pub fn base_file_dir(&self) -> &PathBuf {
-        &self.base_file_dir
+    pub fn base_file_dir(&self) -> PathBuf {
+        let file_dir_define = self.defines.get("BASE_FILE_DIR");
+        if file_dir_define.is_none() {
+            return PathBuf::from(".");
+        }
+        return PathBuf::from(file_dir_define.unwrap().body.as_ref().unwrap());
     }
 
     fn populate_initial_defines() -> HashMap<String, DefineDefinition> {
@@ -165,7 +167,7 @@ impl DmParser<'_> {
                 .iter()
                 .map(|token| token.raw.as_str())
                 .collect::<Vec<&str>>()
-                .join(" ");
+                .join("");
             println!("PreProcessed Line: `{}`", processed_line);
             processed.push(processed_line);
         }
