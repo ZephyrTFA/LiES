@@ -78,51 +78,62 @@ impl DmParser<'_> {
         // go through tokens and combine tokens which should be combined. (strings, etc)
         for (idx, token) in final_tokens.iter().enumerate() {
             match token.chars().next().unwrap() {
-                '*' => {
-                    if idx != 0 {
-                        let mut last = processed_tokens.pop().unwrap();
-                        if last.ends_with(&['*', '/']) {
-                            last.push_str(token);
-                            processed_tokens.push(last);
-                        } else {
-                            processed_tokens.push(last);
-                            processed_tokens.push(token.to_string());
-                        }
-                    } else {
-                        processed_tokens.push(token.to_string());
-                    }
-                }
-                '/' => {
-                    if idx != 0 {
-                        let mut last = processed_tokens.pop().unwrap();
-                        if last.ends_with(&['*', '/']) {
-                            last.push_str(token);
-                            processed_tokens.push(last);
-                        } else {
-                            processed_tokens.push(last);
-                            processed_tokens.push(token.to_string());
-                        }
-                    } else {
-                        processed_tokens.push(token.to_string());
-                    }
-                }
+                '*' => Self::handle_asterisk(token, &mut processed_tokens, idx),
+                '/' => Self::handle_slash(token, &mut processed_tokens, idx),
                 '"' => {
                     in_string = !in_string;
                     processed_tokens.push(token.to_string());
                 }
-                _ => {
-                    if in_string && !processed_tokens.last().unwrap().starts_with('\"') {
-                        let mut last = processed_tokens.pop().unwrap();
-                        last.push_str(token);
-                        processed_tokens.push(last);
-                        continue;
-                    }
-                    processed_tokens.push(token.to_string());
-                }
+                _ => Self::handle_rest(token, &mut processed_tokens, in_string),
             }
         }
 
         processed_tokens
+    }
+
+    fn handle_asterisk(token: &str, processed_tokens: &mut Vec<String>, idx: usize) {
+        if idx == 0 {
+            processed_tokens.push(token.to_string());
+            return;
+        }
+
+        let mut last = processed_tokens.pop().unwrap();
+
+        if last.ends_with(&['*', '/']) {
+            last.push_str(token);
+            processed_tokens.push(last);
+        } else {
+            processed_tokens.push(last);
+            processed_tokens.push(token.to_string());
+        }
+    }
+
+    fn handle_slash(token: &str, processed_tokens: &mut Vec<String>, idx: usize) {
+        if idx == 0 {
+            processed_tokens.push(token.to_string());
+            return;
+        }
+
+        let mut last = processed_tokens.pop().unwrap();
+
+        if last.ends_with(&['*', '/']) {
+            last.push_str(token);
+            processed_tokens.push(last);
+        } else {
+            processed_tokens.push(last);
+            processed_tokens.push(token.to_string());
+        }
+    }
+
+    fn handle_rest(token: &str, processed_tokens: &mut Vec<String>, in_string: bool) {
+        if in_string && !processed_tokens.last().unwrap().starts_with('\"') {
+            let mut last = processed_tokens.pop().unwrap();
+            last.push_str(token);
+            processed_tokens.push(last);
+            return;
+        }
+
+        processed_tokens.push(token.to_string());
     }
 
     pub(super) fn preprocess(&mut self, path: &Path, lines: Vec<String>) -> Result<Vec<String>> {
@@ -404,5 +415,25 @@ impl DmParser<'_> {
             std::io::ErrorKind::InvalidInput,
             format!("Preprocessor Error: {}", message),
         ))
+    }
+}
+
+// Test the handle_asterisk, handle_slash, and handle_rest functions
+#[cfg(test)]
+mod tests {
+    use super::DmParser;
+
+    #[test]
+    fn test_handle_asterisk() {
+        let mut processed_tokens = vec!["token1".into(), "token2*".into()];
+        DmParser::handle_asterisk("*", &mut processed_tokens, 2);
+        assert_eq!(processed_tokens, vec!["token1", "token2**"]);
+    }
+
+    #[test]
+    fn test_handle_slash() {
+        let mut processed_tokens = vec!["token1".into(), "token2/".into()];
+        DmParser::handle_slash("/", &mut processed_tokens, 2);
+        assert_eq!(processed_tokens, vec!["token1", "token2//"]);
     }
 }
