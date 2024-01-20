@@ -21,7 +21,6 @@ impl DmPreProcessor {
 
             let token = tokens.remove(0);
             let token = token.value();
-            debug!("token: `{}`", token);
 
             if let Some(until_token) = &skip_until_regex {
                 if until_token.is_match(token) {
@@ -32,9 +31,7 @@ impl DmPreProcessor {
             }
 
             if token.ends_with("//") {
-                debug!("found comment");
-                let comment = Self::take_until_match(&mut tokens, "\n");
-                debug!("comment: {:?}", comment);
+                Self::take_until_match(&mut tokens, "\n");
                 continue;
             }
 
@@ -43,9 +40,15 @@ impl DmPreProcessor {
             static MULTI_LINE_COMMENT_END: Lazy<Regex> =
                 Lazy::new(|| Regex::new(r"\*+/+").unwrap());
             if MULTI_LINE_COMMENT_START.is_match(token) && !MULTI_LINE_COMMENT_END.is_match(token) {
-                debug!("found multiline comment");
-                let comment = Self::take_until_regex(&mut tokens, &MULTI_LINE_COMMENT_END);
-                debug!("comment: {:?}", comment);
+                Self::take_until_regex(&mut tokens, &MULTI_LINE_COMMENT_END);
+                continue;
+            }
+
+            if token == "#" {
+                let directive = tokens.remove(0);
+                let directive = directive.value(); // needs to be seperate because of borrow checker
+                let args = Self::take_until_match(&mut tokens, "\n");
+                self.handle_directive(directive, args).unwrap();
                 continue;
             }
         }

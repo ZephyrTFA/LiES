@@ -74,6 +74,10 @@ impl DmParser {
             debug!("Failed to load file {}", actual_path.display());
         }
 
+        for pending_include in self.preprocessor.take_pending_includes() {
+            self.load(pending_include)?;
+        }
+
         self.environment_traversal
             .pop() // not returning an Err here because this SHOULD not be possible
             .expect("failed to pop directory traversal?");

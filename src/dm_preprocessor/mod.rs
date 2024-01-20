@@ -1,8 +1,10 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, mem::replace, path::PathBuf};
 
 use self::define_definition::DmDefineDefinition;
 
 pub mod define_definition;
+pub mod directive;
+pub mod directive_delegation;
 pub mod preprocess_core;
 pub mod token_handling;
 
@@ -15,6 +17,7 @@ pub struct DmPreProcessor {
     logical_skip_levels: usize, // if this somehow gets too big, find the nearest bar
     tokenize_in_string: bool,
     tokenize_in_quote: bool,
+    pending_includes: Vec<PathBuf>,
 }
 
 impl Default for DmPreProcessor {
@@ -30,6 +33,7 @@ impl DmPreProcessor {
             logical_skip_levels: 0,
             tokenize_in_string: false,
             tokenize_in_quote: false,
+            pending_includes: vec![],
         }
     }
 
@@ -70,5 +74,9 @@ impl DmPreProcessor {
 
     pub fn is_skipping(&self) -> bool {
         self.logical_skip_levels > 0
+    }
+
+    pub fn take_pending_includes(&mut self) -> Vec<PathBuf> {
+        std::mem::take(&mut self.pending_includes)
     }
 }
