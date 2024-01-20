@@ -83,9 +83,7 @@ impl DmParser {
     fn parse_file(&mut self, file: impl Into<PathBuf>) -> Result<(), String> {
         let file = DmFile::new(&self.environment_directory, file.into())?;
         let tokens = self.preprocessor.preprocess(&file);
-        for token in tokens {
-            println!("token: {:?}", token);
-        }
+        for token in tokens {}
         Ok(())
     }
 }

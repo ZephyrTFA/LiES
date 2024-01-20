@@ -1,0 +1,1 @@
+pub const ERROR_CODE_PATTERN_NOT_FOUND: i32 = 1;

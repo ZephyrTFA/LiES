@@ -50,12 +50,13 @@ impl Log for InternalLogger {
             return;
         }
 
+        let record_body = record.args().to_string().escape_debug().to_string();
         let timestamp = chrono::Local::now().format("%H:%M:%S");
         let message = format!(
             "[{}][{}] {}",
             timestamp,
             record.level(),
-            self.color(record.level(), record.args().to_string().as_str())
+            self.color(record.level(), &record_body)
         );
         let mut stdout = self.get_stdout();
         stdout.write_all(message.as_bytes()).unwrap();

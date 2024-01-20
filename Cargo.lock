@@ -143,6 +143,7 @@ dependencies = [
  "chrono",
  "console",
  "log",
+ "once_cell",
  "regex",
 ]
 
