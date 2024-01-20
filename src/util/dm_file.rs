@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+use log::debug;
+
 pub struct DmFile {
     path: PathBuf,
     lines: Vec<String>,
@@ -14,12 +16,13 @@ impl DmFile {
 
     fn load_lines(path: &PathBuf) -> Result<Vec<String>, String> {
         let raw: String = std::fs::read_to_string(path).map_err(|err| err.to_string())?;
-        let lines: Vec<String> = raw.lines().map(Self::sanitize_line).collect();
+        let mut lines = raw.lines();
+        let lines: Vec<String> = lines.map(Self::sanitize_line).collect();
         Ok(lines)
     }
 
-    pub fn lines(&self) -> Vec<&str> {
-        self.lines.iter().map(|line| line.as_str()).collect()
+    pub fn lines(&self) -> &Vec<String> {
+        &self.lines
     }
 
     pub fn path(&self) -> &PathBuf {
@@ -27,6 +30,6 @@ impl DmFile {
     }
 
     fn sanitize_line(line: &str) -> String {
-        line.trim().replace('\r', "")
+        line.replace('\r', "")
     }
 }

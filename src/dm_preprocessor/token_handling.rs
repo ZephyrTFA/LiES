@@ -34,21 +34,16 @@ impl PartialEq for DmToken {
 }
 
 impl DmPreProcessor {
-    fn condense_lines(&mut self, lines: Vec<impl Into<String>>) -> Vec<String> {
-        let mut lines = lines
-            .into_iter()
-            .map(|line| line.into())
-            .collect::<Vec<_>>();
-
+    fn condense_lines(&mut self, lines: &Vec<String>) -> Vec<String> {
         if lines.is_empty() {
-            return lines;
+            return vec![];
         }
 
         let mut condensed = vec![];
 
+        let mut lines = lines.clone();
         while !lines.is_empty() {
             let mut line = lines.remove(0);
-
             while line.ends_with('\\') {
                 line.pop();
                 if !lines.is_empty() {
@@ -62,7 +57,7 @@ impl DmPreProcessor {
         condensed
     }
 
-    pub fn tokenize(&mut self, lines: Vec<impl Into<String>>) -> Vec<DmToken> {
+    pub fn tokenize(&mut self, lines: &Vec<String>) -> Vec<DmToken> {
         let condensed_lines: Vec<String> = self.condense_lines(lines);
         let mut tokens: Vec<DmToken> = vec![];
 
@@ -103,6 +98,25 @@ impl DmPreProcessor {
                 }
 
                 match char {
+                    '"' | '\'' => {
+                        if token.ends_with("\\") {
+                            token.push(char);
+                            continue;
+                        }
+                        if !token.is_empty() {
+                            tokens.push(DmToken::new(token));
+                            token = String::new();
+                        }
+                        tokens.push(DmToken::new(char.to_string()));
+                        in_quote = Some(char);
+                        continue;
+                    }
+                    '\\' => {
+                        if token.ends_with("\\") {
+                            token.push(char);
+                            continue;
+                        }
+                    }
                     ' ' | '\t' => {
                         if token.ends_with(char) {
                             token.push(char);

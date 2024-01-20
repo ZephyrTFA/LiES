@@ -13,6 +13,8 @@ impl DmPreProcessor {
         let mut tokens = self.tokenize(file.lines());
         let mut skip_until_regex: Option<Regex> = None;
 
+        let mut in_quote = None;
+
         let mut final_tokens: Vec<DmToken> = vec![];
         loop {
             if tokens.is_empty() {
@@ -44,7 +46,7 @@ impl DmPreProcessor {
                 continue;
             }
 
-            if token == "#" {
+            if in_quote.is_none() && token == "#" {
                 let directive = tokens.remove(0);
                 let directive = directive.value(); // needs to be seperate because of borrow checker
 
@@ -69,6 +71,11 @@ impl DmPreProcessor {
             }
 
             if self.is_skipping() {
+                continue;
+            }
+
+            if token == "\"" || token == "'" {
+                in_quote = Some(token.chars().next().unwrap());
                 continue;
             }
 
