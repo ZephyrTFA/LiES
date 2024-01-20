@@ -1,8 +1,14 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    process::exit,
+};
 
-use log::debug;
+use log::{debug, error, info, trace};
 
-use crate::{dm_preprocessor::DmPreProcessor, util::dm_file::DmFile};
+use crate::{
+    dm_preprocessor::DmPreProcessor,
+    util::{dm_file::DmFile, exit_codes::ERROR_CODE_DIRECTORY_TRAVERSAL_FAILED},
+};
 
 pub struct DmParser {
     preprocessor: DmPreProcessor,
@@ -40,11 +46,7 @@ impl DmParser {
         };
 
         let wanted_path = file.into();
-        debug!(
-            "Loading file `{}` from `{}`",
-            wanted_path.display(),
-            current_traversal.display(),
-        );
+        info!("Parsing `{}`", wanted_path.display());
 
         let load_from = self
             .environment_directory
@@ -56,15 +58,16 @@ impl DmParser {
             .expect("failed to canonicalize wanted path");
 
         let actual_path = self.convert_canonical_path_to_relative(&wanted_path);
-        debug!("Actual path: {}", actual_path.display());
+        trace!("Actual path: {}", actual_path.display());
 
         if let Some(parent) = actual_path.parent() {
             self.environment_traversal.push(parent.into());
         } else {
-            return Err(format!(
-                "Failed to determine parent offset for directory traversal in {}",
-                line!()
-            ));
+            error!(
+                "Failed to determine logical parent of `{}`",
+                actual_path.display()
+            );
+            exit(ERROR_CODE_DIRECTORY_TRAVERSAL_FAILED);
         }
 
         let result = self.parse_file(&actual_path);

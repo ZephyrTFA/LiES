@@ -1,19 +1,24 @@
-use log::debug;
+use std::process::exit;
 
-use crate::dm_preprocessor::{token_handling::DmToken, DmPreProcessor};
+use log::{debug, error, trace};
+
+use crate::{
+    dm_preprocessor::{token_handling::DmToken, DmPreProcessor},
+    util::exit_codes::ERROR_CODE_INVALID_INCLUDE_FORMAT,
+};
 
 impl DmPreProcessor {
     pub fn handle_include(&mut self, args: &[DmToken]) -> Result<(), String> {
         if args.len() != 3 {
-            return Err(format!(
-                "Invalid number of arguments for `include` (expected 3, got {})",
-                args.len()
-            ));
+            error!("Invalid argument format for `include`");
+            exit(ERROR_CODE_INVALID_INCLUDE_FORMAT);
         }
+
         if args[0].value() != "\"" || args[2].value() != "\"" {
-            return Err("Invalid argument format for `include`".to_owned());
+            error!("Invalid argument format for `include`");
+            exit(ERROR_CODE_INVALID_INCLUDE_FORMAT);
         }
-        debug!("include: `{}`", args[1].value());
+        trace!("include: `{}`", args[1].value());
         self.pending_includes.push(args[1].value().into());
         Ok(())
     }
