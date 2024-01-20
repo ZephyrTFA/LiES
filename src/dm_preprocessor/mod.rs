@@ -4,7 +4,6 @@ use self::define_definition::DmDefineDefinition;
 
 pub mod define_definition;
 pub mod directive;
-pub mod directive_delegation;
 pub mod preprocess_core;
 pub mod token_handling;
 

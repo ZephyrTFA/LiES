@@ -49,9 +49,11 @@ impl DmPreProcessor {
         while !lines.is_empty() {
             let mut line = lines.remove(0);
 
-            if line.ends_with('\\') {
+            while line.ends_with('\\') {
                 line.pop();
-                line.push_str(&lines.remove(0));
+                if !lines.is_empty() {
+                    line.push_str(&lines.remove(0));
+                }
             }
 
             condensed.push(line);

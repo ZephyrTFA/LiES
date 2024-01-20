@@ -30,7 +30,7 @@ impl DmPreProcessor {
                 continue;
             }
 
-            if token.ends_with("//") {
+            if token.starts_with("//") {
                 Self::take_until_match(&mut tokens, "\n");
                 continue;
             }
@@ -47,35 +47,81 @@ impl DmPreProcessor {
             if token == "#" {
                 let directive = tokens.remove(0);
                 let directive = directive.value(); // needs to be seperate because of borrow checker
-                let args = Self::take_until_match(&mut tokens, "\n");
+
+                let mut args = Self::take_until_match_any(&mut tokens, &["\n", "//"]);
+                while !args.is_empty() {
+                    if args[0].value().chars().all(char::is_whitespace) {
+                        args.remove(0);
+                    } else if args
+                        .last()
+                        .unwrap()
+                        .value()
+                        .chars()
+                        .all(char::is_whitespace)
+                    {
+                        args.pop();
+                    } else {
+                        break;
+                    }
+                }
                 self.handle_directive(directive, args).unwrap();
                 continue;
             }
+
+            if self.is_skipping() {
+                continue;
+            }
+
+            final_tokens.push(DmToken::new(token.to_owned()));
         }
 
         final_tokens
     }
 
     fn take_until_match(tokens: &mut Vec<DmToken>, pattern: &str) -> Vec<DmToken> {
-        return Self::take_until(tokens, |token| token.value() == pattern);
+        match Self::take_until(tokens, |token| token.value() == pattern) {
+            Some(tokens) => tokens,
+            None => {
+                error!("Failed to find pattern `{}`", pattern);
+                exit(ERROR_CODE_PATTERN_NOT_FOUND);
+            }
+        }
+    }
+
+    fn take_until_match_any(tokens: &mut Vec<DmToken>, patterns: &[&str]) -> Vec<DmToken> {
+        match Self::take_until(tokens, |token| patterns.contains(&token.value())) {
+            Some(tokens) => tokens,
+            None => {
+                error!("Failed to find pattern `{}`", patterns.join("`, `"));
+                exit(ERROR_CODE_PATTERN_NOT_FOUND);
+            }
+        }
     }
 
     fn take_until_regex(tokens: &mut Vec<DmToken>, pattern: &Regex) -> Vec<DmToken> {
-        return Self::take_until(tokens, |token| pattern.is_match(token.value()));
+        match Self::take_until(tokens, |token| pattern.is_match(token.value())) {
+            Some(tokens) => tokens,
+            None => {
+                error!("Failed to find regex pattern `{}`", pattern);
+                exit(ERROR_CODE_PATTERN_NOT_FOUND);
+            }
+        }
     }
 
-    fn take_until(tokens: &mut Vec<DmToken>, check: impl Fn(&DmToken) -> bool) -> Vec<DmToken> {
+    fn take_until(
+        tokens: &mut Vec<DmToken>,
+        check: impl Fn(&DmToken) -> bool,
+    ) -> Option<Vec<DmToken>> {
         let mut final_tokens = vec![];
 
-        loop {
+        while !tokens.is_empty() {
             let token = tokens.remove(0);
             if check(&token) {
-                return final_tokens;
+                return Some(final_tokens);
             }
             final_tokens.push(token);
         }
 
-        error!("take_until pattern never found");
-        exit(ERROR_CODE_PATTERN_NOT_FOUND);
+        None
     }
 }

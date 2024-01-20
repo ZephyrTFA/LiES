@@ -3,7 +3,7 @@ use std::{
     process::exit,
 };
 
-use log::{debug, error, info, trace};
+use log::{debug, error, info, trace, warn};
 
 use crate::{
     dm_preprocessor::DmPreProcessor,
@@ -46,8 +46,11 @@ impl DmParser {
         };
 
         let wanted_path = file.into();
-        info!("Parsing `{}`", wanted_path.display());
+        if wanted_path.extension().unwrap() == "dmm" {
+            return Ok(());
+        }
 
+        info!("Parsing `{}`", wanted_path.display());
         let load_from = self
             .environment_directory
             .join(self.preprocessor.get_base_file_dir());
@@ -72,9 +75,9 @@ impl DmParser {
 
         let result = self.parse_file(&actual_path);
         if result.is_ok() {
-            debug!("Successfully loaded file {}", actual_path.display());
+            trace!("Successfully loaded file {}", actual_path.display());
         } else {
-            debug!("Failed to load file {}", actual_path.display());
+            trace!("Failed to load file {}", actual_path.display());
         }
 
         for pending_include in self.preprocessor.take_pending_includes() {
@@ -90,6 +93,7 @@ impl DmParser {
     fn parse_file(&mut self, file: impl Into<PathBuf>) -> Result<(), String> {
         let file = DmFile::new(&self.environment_directory, file.into())?;
         let tokens = self.preprocessor.preprocess(&file);
+        warn!("parsing not yet implemented.");
         for token in tokens {}
         Ok(())
     }

@@ -50,7 +50,7 @@ impl Log for InternalLogger {
             return;
         }
 
-        let record_body = record.args().to_string().escape_debug().to_string();
+        let record_body = record.args().to_string();
         let timestamp = chrono::Local::now().format("%H:%M:%S");
         let message = format!(
             "[{}][{}] {}",
