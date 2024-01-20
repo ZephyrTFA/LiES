@@ -8,7 +8,7 @@ use crate::{
 };
 
 impl DmPreProcessor {
-    pub(super) fn handle_include(&mut self, args: &[DmToken]) -> Result<(), String> {
+    pub(super) fn handle_include(&mut self, args: &[DmToken]) -> Result<(), ()> {
         if args.len() != 3 {
             error!("Invalid argument format for `include`");
             exit(ERROR_CODE_INVALID_INCLUDE_FORMAT);

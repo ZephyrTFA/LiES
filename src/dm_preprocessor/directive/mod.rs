@@ -20,7 +20,7 @@ impl DmPreProcessor {
         &mut self,
         directive: &str,
         mut args: Vec<DmToken>,
-    ) -> Result<(), String> {
+    ) -> Result<(), ()> {
         if directive == "else" {
             if !args.is_empty() {
                 warn!("`else` directive has arguments that will be ignored");
