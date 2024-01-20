@@ -1,107 +1,91 @@
-use std::{
-    collections::HashMap,
-    io::{Error, Result},
-    path::PathBuf,
-};
+use std::path::{Path, PathBuf};
 
-use self::{dm_file::DmFile, preprocessor::PreprocessState};
+use log::debug;
 
-mod define_definition;
-pub mod dm_file;
-mod parse_dm;
-mod parse_dmf;
-mod parse_dmm;
-mod preprocessor;
-mod preprocessor_if;
-mod token_store;
+use crate::{dm_preprocessor::DmPreProcessor, util::dm_file::DmFile};
 
-pub struct DmParser<'a> {
-    files: HashMap<PathBuf, DmFile>,
-    directory_traversal: Vec<PathBuf>,
+pub struct DmParser {
+    preprocessor: DmPreProcessor,
+    /// The order in which files were included. Uses a relative path from the environment directory.
     include_order: Vec<PathBuf>,
-    work_directory: PathBuf,
-    preprocess_state: PreprocessState<'a>,
+    environment_directory: PathBuf,
+    environment_traversal: Vec<PathBuf>,
 }
 
-impl DmParser<'_> {
-    pub fn new(work_directory: impl Into<PathBuf>) -> Self {
-        let work_directory = work_directory.into();
+impl DmParser {
+    pub fn new(environment_directory: impl Into<PathBuf>) -> Self {
+        let environment_directory = environment_directory.into().canonicalize().unwrap();
+        debug!(
+            "DmParser new with env dir `{}`",
+            environment_directory.display()
+        );
         Self {
+            preprocessor: DmPreProcessor::new(),
             include_order: vec![],
-            files: HashMap::new(),
-            work_directory,
-            preprocess_state: PreprocessState::new(),
-            directory_traversal: vec![],
+            environment_directory,
+            environment_traversal: vec![],
         }
     }
 
-    pub fn load(&mut self, path: &str) -> Result<()> {
-        let final_path = self
-            .work_directory
-            .join(self.preprocess_state.base_file_dir())
-            .join(
-                self.directory_traversal
-                    .last()
-                    .unwrap_or(&PathBuf::from(".")),
-            )
-            .join(path);
-        println!("Loading File: `{}`", final_path.display());
-        self.load_file(DmFile::new(final_path)?)
+    fn convert_canonical_path_to_relative(&self, path: &Path) -> PathBuf {
+        path.strip_prefix(&self.environment_directory)
+            .unwrap()
+            .to_path_buf()
     }
 
-    fn load_file(&mut self, file: DmFile) -> Result<()> {
-        let path = file.path().clone();
+    pub fn load(&mut self, file: impl Into<PathBuf>) -> Result<(), String> {
+        let current_traversal = match self.environment_traversal.last() {
+            Some(traversal) => traversal.clone(),
+            None => ".".into(),
+        };
 
-        if self.files.contains_key(&path) {
-            eprintln!("Attempted to parse a file twice: `{}`", path.display());
-            return Ok(());
-        }
-
-        let lines: Vec<String> = file
-            .lines()
-            .iter()
-            .map(|line| line.to_string().clone())
-            .collect();
-
-        self.include_order.push(path.clone());
-        self.directory_traversal.push(
-            path.parent()
-                .ok_or(Error::new(
-                    std::io::ErrorKind::InvalidInput,
-                    "failed to find parent directory",
-                ))?
-                .to_path_buf(),
+        let wanted_path = file.into();
+        debug!(
+            "Loading file `{}` from `{}`",
+            wanted_path.display(),
+            current_traversal.display(),
         );
 
-        self.files.insert(path.clone(), file);
-        let extension = path
-            .extension()
-            .ok_or(Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "failed to find file extension",
-            ))?
-            .to_str()
-            .ok_or(Error::new(
-                std::io::ErrorKind::InvalidData,
-                "failed to parse file extension",
-            ))?;
+        let load_from = self
+            .environment_directory
+            .join(self.preprocessor.get_base_file_dir());
+        let wanted_path = load_from
+            .join(current_traversal)
+            .join(wanted_path)
+            .canonicalize()
+            .expect("failed to canonicalize wanted path");
 
-        let lines = self.preprocess(&path, lines)?;
-        let lines: Vec<&str> = lines.iter().map(|line| line.as_str()).collect();
+        let actual_path = self.convert_canonical_path_to_relative(&wanted_path);
+        debug!("Actual path: {}", actual_path.display());
 
-        let result = match extension {
-            "dme" => Ok(()), // preprocess only
-            "dmf" => self.parse_file_dmf(&path, lines.as_slice()),
-            "dmm" => self.parse_file_dmm(&path, lines.as_slice()),
-            "dm" => self.parse_file_dm(&path, lines.as_slice()),
-            _ => {
-                return Err(Error::new(
-                    std::io::ErrorKind::InvalidInput,
-                    "invalid file type",
-                ))
-            }
-        };
-        self.directory_traversal.pop();
+        if let Some(parent) = actual_path.parent() {
+            self.environment_traversal.push(parent.into());
+        } else {
+            return Err(format!(
+                "Failed to determine parent offset for directory traversal in {}",
+                line!()
+            ));
+        }
+
+        let result = self.parse_file(&actual_path);
+        if result.is_ok() {
+            debug!("Successfully loaded file {}", actual_path.display());
+        } else {
+            debug!("Failed to load file {}", actual_path.display());
+        }
+
+        self.environment_traversal
+            .pop() // not returning an Err here because this SHOULD not be possible
+            .expect("failed to pop directory traversal?");
         result
+    }
+
+    fn parse_file(&mut self, file: impl Into<PathBuf>) -> Result<(), String> {
+        let file = DmFile::new(&self.environment_directory, file.into())?;
+        let tokens = self.preprocessor.preprocess(&file);
+        for token in tokens {
+            println!("token: {:?}", token);
+        }
+        Ok(())
     }
 }

@@ -1,17 +1,18 @@
-use std::io::Error;
+#![allow(dead_code)]
+#![allow(unused)]
 
 use dm_parser::DmParser;
+use log::{logger, set_logger};
 
 pub mod dm_parser;
+pub mod dm_preprocessor;
 pub mod util;
 
 pub fn main() -> Result<(), String> {
-    let mut parser = DmParser::new("D:/ss13/tgstation");
-    parser
-        .load("tgstation.dme")
-        .map_err(|err: Error| err.to_string())
-}
+    crate::util::log::init();
 
-pub fn is_verbose() -> bool {
-    std::env::args().any(|arg| arg == "--verbose")
+    let mut parser = DmParser::new("D:/ss13/tgstation");
+    parser.load("tgstation.dme")
+
+    // Ok(())
 }

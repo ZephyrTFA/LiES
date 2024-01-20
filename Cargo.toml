@@ -11,3 +11,4 @@ parser = []
 log = "0.4.20"
 chrono = "0.4.31"
 regex = "1.10.2"
+console = "0.15.8"
