@@ -19,10 +19,40 @@ impl DmPreProcessor {
     pub(super) fn handle_directive(
         &mut self,
         directive: &str,
-        mut args: Vec<DmToken>,
+        args: Vec<DmToken>,
     ) -> Result<(), ParseError> {
+        let mut effective_args = vec![];
+        for arg in args {
+            if arg.value().contains("//") {
+                break;
+            }
+            effective_args.push(arg);
+        }
+
+        while !effective_args.is_empty() {
+            if effective_args
+                .first()
+                .unwrap()
+                .value()
+                .chars()
+                .all(char::is_whitespace)
+            {
+                effective_args.remove(0);
+            } else if effective_args
+                .last()
+                .unwrap()
+                .value()
+                .chars()
+                .all(char::is_whitespace)
+            {
+                effective_args.pop();
+            } else {
+                break;
+            }
+        }
+
         if directive == "else" {
-            if !args.is_empty() {
+            if !effective_args.is_empty() {
                 warn!("`else` directive has arguments that will be ignored");
             };
             if !self.is_skipping() {
@@ -32,7 +62,7 @@ impl DmPreProcessor {
         }
 
         if directive == "endif" {
-            if !args.is_empty() {
+            if !effective_args.is_empty() {
                 warn!("`endif` directive has arguments that will be ignored");
             };
             if self.is_skipping() {
@@ -49,16 +79,19 @@ impl DmPreProcessor {
         }
 
         match directive {
-            "define" => self.handle_define(&args),
-            "error" => self.handle_error(&args),
-            "if" => self.handle_if(&args),
-            "ifdef" => self.handle_ifdef(&args),
-            "ifndef" => self.handle_ifndef(&args),
-            "include" => self.handle_include(&args),
-            "undef" => self.handle_undef(&args),
-            "warn" => self.handle_warn(&args),
+            "define" => self.handle_define(&effective_args),
+            "error" => self.handle_error(&effective_args),
+            "if" => self.handle_if(&effective_args),
+            "ifdef" => self.handle_ifdef(&effective_args),
+            "ifndef" => self.handle_ifndef(&effective_args),
+            "include" => self.handle_include(&effective_args),
+            "undef" => self.handle_undef(&effective_args),
+            "warn" => self.handle_warn(&effective_args),
             _ => {
-                error!("Unknown directive `{}` with args `{:#?}`", directive, args);
+                error!(
+                    "Unknown directive `{}` with args `{:#?}`",
+                    directive, effective_args
+                );
                 exit(ERROR_CODE_UNKNOWN_DIRECTIVE);
             }
         }

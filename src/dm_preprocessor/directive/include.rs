@@ -10,7 +10,7 @@ use crate::{
 impl DmPreProcessor {
     pub(super) fn handle_include(&mut self, args: &[DmToken]) -> Result<(), ParseError> {
         if args.len() != 3 {
-            error!("Invalid argument format for `include`");
+            error!("Invalid argument format for `include`: {:#?}", args);
             exit(ERROR_CODE_INVALID_INCLUDE_FORMAT);
         }
 

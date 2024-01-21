@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use log::{debug, error};
+use log::{debug, error, trace};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -57,12 +57,20 @@ impl DmPreProcessor {
         condensed
     }
 
+    fn is_first_non_whitespace_char(line_tokens: &[DmToken]) -> bool {
+        line_tokens.is_empty()
+            || line_tokens
+                .iter()
+                .all(|token| token.value().chars().all(char::is_whitespace))
+    }
+
     pub fn tokenize(&mut self, lines: &Vec<String>) -> Vec<DmToken> {
         let condensed_lines: Vec<String> = self.condense_lines(lines);
         let mut tokens: Vec<DmToken> = vec![];
 
         let mut in_quote: Option<char> = None;
         let mut in_comment = false;
+        let mut in_preprocessor = false;
         let mut in_multiline_comment = false;
 
         for line in condensed_lines {
@@ -82,11 +90,11 @@ impl DmPreProcessor {
                     // walk backwards from the token looking for any /
                     // byond ends multiline comments using any number of * followed by /
                     // but NOT if there is a / before the first *
-                    let mut found = false;
+                    let mut broken = false;
                     for char in token.chars().rev() {
                         match char {
                             '/' => {
-                                found = true;
+                                broken = true;
                                 break;
                             }
                             '*' => {
@@ -97,9 +105,9 @@ impl DmPreProcessor {
                             }
                         }
                     }
-                    if found {
+                    token.push(char);
+                    if !broken {
                         in_multiline_comment = false;
-                        token.push(char);
                         line_tokens.push(DmToken::new(token));
                         token = String::new();
                         continue;
@@ -121,26 +129,27 @@ impl DmPreProcessor {
 
                 if token.is_empty() {
                     token.push(char);
+                    if char == '#' && Self::is_first_non_whitespace_char(&line_tokens) {
+                        in_preprocessor = true;
+                    }
                     continue;
                 }
 
-                if !token.ends_with('\\') {
-                    match char {
-                        '"' | '\'' => {
-                            if !token.is_empty() {
-                                line_tokens.push(DmToken::new(token));
-                                token = String::new();
-                            }
-                            line_tokens.push(DmToken::new(char.to_string()));
-                            in_quote = Some(char);
+                match char {
+                    '"' => {
+                        if token.ends_with('\\') {
+                            token.push(char);
                             continue;
                         }
-                        _ => {}
+                        if !token.is_empty() {
+                            line_tokens.push(DmToken::new(token));
+                            token = String::new();
+                        }
+                        line_tokens.push(DmToken::new(char.to_string()));
+                        in_quote = Some(char);
+                        continue;
                     }
-                }
-
-                match char {
-                    '"' | '\'' => {
+                    '\'' if !in_preprocessor => {
                         if token.ends_with('\\') {
                             token.push(char);
                             continue;
@@ -189,6 +198,9 @@ impl DmPreProcessor {
                             line_tokens.push(DmToken::new(token));
                             token = String::new();
                             token.push(char);
+                            if char == '#' && Self::is_first_non_whitespace_char(&line_tokens) {
+                                in_preprocessor = true;
+                            }
                             continue;
                         }
                     }
@@ -234,6 +246,7 @@ impl DmPreProcessor {
             line_tokens.push(DmToken::new("\n".into()));
             tokens.append(&mut line_tokens);
             in_comment = false;
+            in_preprocessor = false;
         }
 
         tokens
