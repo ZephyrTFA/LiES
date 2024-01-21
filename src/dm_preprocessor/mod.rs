@@ -5,6 +5,7 @@ use self::define_definition::DmDefineDefinition;
 pub mod define_definition;
 pub mod directive;
 pub mod preprocess_core;
+mod stddef_defines;
 pub mod token_handling;
 
 #[cfg(test)]
@@ -31,7 +32,7 @@ impl Default for DmPreProcessor {
 impl DmPreProcessor {
     pub fn new() -> Self {
         Self {
-            defines: HashMap::new(),
+            defines: Self::initial_defines(),
             logical_skip_levels: 0,
             tokenize_in_string: false,
             tokenize_in_quote: false,
