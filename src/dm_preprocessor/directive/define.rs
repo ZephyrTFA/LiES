@@ -31,7 +31,9 @@ impl DmPreProcessor {
             .iter()
             .map(|token| token.value())
             .collect::<Vec<_>>()
-            .join("");
+            .concat()
+            .trim()
+            .to_owned();
         self.defines.insert(
             name.clone(),
             DmDefineDefinition::new_basic_replace(name, body),

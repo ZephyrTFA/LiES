@@ -1,6 +1,7 @@
 use std::{
-    env::args,
+    env::{self, args},
     io::{self, IsTerminal, Stdout, Write},
+    process::exit,
 };
 
 use log::{Level, LevelFilter, Log};
@@ -12,15 +13,37 @@ pub fn init() {
     log::set_logger(&LOGGER).unwrap();
 
     let mut highest_log_level = log::LevelFilter::Info;
-    for arg in args() {
-        match arg.as_str() {
-            ("--verbose" | "--debug") if highest_log_level < LevelFilter::Debug => {
-                highest_log_level = log::LevelFilter::Debug
+    if let Ok(value) = env::var("LIES_LOG_LEVEL") {
+        if let Ok(parsed) = value.parse() {
+            highest_log_level = parsed;
+        } else {
+            match value.to_lowercase().as_str() {
+                "error" => highest_log_level = LevelFilter::Error,
+                "warn" => highest_log_level = LevelFilter::Warn,
+                "info" => highest_log_level = LevelFilter::Info,
+                "debug" => highest_log_level = LevelFilter::Debug,
+                "trace" => highest_log_level = LevelFilter::Trace,
+                _ => {
+                    eprintln!("Invalid value for LIES_LOG_LEVEL");
+                    exit(1);
+                }
             }
-            "--trace" if highest_log_level < LevelFilter::Trace => {
-                highest_log_level = log::LevelFilter::Trace
+        }
+        println!(
+            "Overriding log level due to environment variable LIES_LOG_LEVEL to {}",
+            highest_log_level
+        );
+    } else {
+        for arg in args() {
+            match arg.as_str() {
+                ("--verbose" | "--debug") if highest_log_level < LevelFilter::Debug => {
+                    highest_log_level = log::LevelFilter::Debug
+                }
+                "--trace" if highest_log_level < LevelFilter::Trace => {
+                    highest_log_level = log::LevelFilter::Trace
+                }
+                _ => {}
             }
-            _ => {}
         }
     }
     log::set_max_level(highest_log_level);
