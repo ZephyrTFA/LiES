@@ -66,7 +66,13 @@ impl DmPreProcessor {
                         break;
                     }
                 }
-                self.handle_directive(directive, args).unwrap();
+                match self.handle_directive(directive, args) {
+                    Ok(()) => {}
+                    Err(code) => {
+                        error!("PreProcessor error: {}", code);
+                        exit(ERROR_CODE_PATTERN_NOT_FOUND);
+                    }
+                }
                 continue;
             }
 
