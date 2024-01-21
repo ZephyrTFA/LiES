@@ -1,17 +1,29 @@
-use std::io::{self, IsTerminal, Stdout, Write};
+use std::{
+    env::args,
+    io::{self, IsTerminal, Stdout, Write},
+};
 
-use log::{Level, Log};
+use log::{Level, LevelFilter, Log};
 
 struct InternalLogger;
 
 pub fn init() {
     static LOGGER: InternalLogger = InternalLogger;
-
     log::set_logger(&LOGGER).unwrap();
-    #[cfg(debug_assertions)]
-    log::set_max_level(log::LevelFilter::Debug);
-    #[cfg(not(debug_assertions))]
-    log::set_max_level(log::LevelFilter::Info);
+
+    let mut highest_log_level = log::LevelFilter::Info;
+    for arg in args() {
+        match arg.as_str() {
+            ("--verbose" | "--debug") if highest_log_level < LevelFilter::Debug => {
+                highest_log_level = log::LevelFilter::Debug
+            }
+            "--trace" if highest_log_level < LevelFilter::Trace => {
+                highest_log_level = log::LevelFilter::Trace
+            }
+            _ => {}
+        }
+    }
+    log::set_max_level(highest_log_level);
 }
 
 impl InternalLogger {
