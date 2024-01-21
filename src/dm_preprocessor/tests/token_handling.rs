@@ -18,15 +18,15 @@ fn test_tokenize_single_line() {
     let lines: Vec<String> = vec!["This is a test.".into()];
 
     let expected = vec![
-        DmToken::new("This".into()),
-        DmToken::new(" ".into()),
-        DmToken::new("is".into()),
-        DmToken::new(" ".into()),
-        DmToken::new("a".into()),
-        DmToken::new(" ".into()),
-        DmToken::new("test".into()),
-        DmToken::new(".".into()),
-        DmToken::new("\n".into()),
+        DmToken::from("This"),
+        DmToken::from(" "),
+        DmToken::from("is"),
+        DmToken::from(" "),
+        DmToken::from("a"),
+        DmToken::from(" "),
+        DmToken::from("test"),
+        DmToken::from("."),
+        DmToken::from("\n"),
     ];
 
     let result = preprocessor.tokenize(&lines);
@@ -41,20 +41,20 @@ fn test_tokenize_multiple_lines() {
     let lines: Vec<String> = vec!["This is a test.".into(), "Another test.".into()];
 
     let expected = vec![
-        DmToken::new("This".into()),
-        DmToken::new(" ".into()),
-        DmToken::new("is".into()),
-        DmToken::new(" ".into()),
-        DmToken::new("a".into()),
-        DmToken::new(" ".into()),
-        DmToken::new("test".into()),
-        DmToken::new(".".into()),
-        DmToken::new("\n".into()),
-        DmToken::new("Another".into()),
-        DmToken::new(" ".into()),
-        DmToken::new("test".into()),
-        DmToken::new(".".into()),
-        DmToken::new("\n".into()),
+        DmToken::from("This"),
+        DmToken::from(" "),
+        DmToken::from("is"),
+        DmToken::from(" "),
+        DmToken::from("a"),
+        DmToken::from(" "),
+        DmToken::from("test"),
+        DmToken::from("."),
+        DmToken::from("\n"),
+        DmToken::from("Another"),
+        DmToken::from(" "),
+        DmToken::from("test"),
+        DmToken::from("."),
+        DmToken::from("\n"),
     ];
 
     let result = preprocessor.tokenize(&lines);
@@ -69,16 +69,44 @@ fn test_tokenize_empty_lines() {
     let lines: Vec<String> = vec!["This is a test.".into(), "".into()];
 
     let expected: Vec<DmToken> = vec![
-        DmToken::new("This".into()),
-        DmToken::new(" ".into()),
-        DmToken::new("is".into()),
-        DmToken::new(" ".into()),
-        DmToken::new("a".into()),
-        DmToken::new(" ".into()),
-        DmToken::new("test".into()),
-        DmToken::new(".".into()),
-        DmToken::new("\n".into()),
-        DmToken::new("\n".into()),
+        DmToken::from("This"),
+        DmToken::from(" "),
+        DmToken::from("is"),
+        DmToken::from(" "),
+        DmToken::from("a"),
+        DmToken::from(" "),
+        DmToken::from("test"),
+        DmToken::from("."),
+        DmToken::from("\n"),
+        DmToken::from("\n"),
+    ];
+
+    let result = preprocessor.tokenize(&lines);
+
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_condense_lines() {
+    let mut preprocessor = DmPreProcessor::new();
+
+    let lines: Vec<String> = vec!["This is a test. \\".into(), "Another test.".into()];
+
+    let expected = vec![
+        DmToken::from("This"),
+        DmToken::from(" "),
+        DmToken::from("is"),
+        DmToken::from(" "),
+        DmToken::from("a"),
+        DmToken::from(" "),
+        DmToken::from("test"),
+        DmToken::from("."),
+        DmToken::from(" "),
+        DmToken::from("Another"),
+        DmToken::from(" "),
+        DmToken::from("test"),
+        DmToken::from("."),
+        DmToken::from("\n"),
     ];
 
     let result = preprocessor.tokenize(&lines);

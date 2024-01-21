@@ -62,48 +62,11 @@ impl DmPreProcessor {
         let mut tokens: Vec<DmToken> = vec![];
 
         let mut in_quote: Option<char> = None;
-        let mut in_comment = false;
-        let mut in_multiline_comment = false;
-
         for line in condensed_lines {
-            let mut line_tokens: Vec<DmToken> = vec![];
             let mut token = String::new();
             for char in line.chars() {
-                if in_comment {
+                if token.is_empty() {
                     token.push(char);
-                    continue;
-                }
-
-                if in_multiline_comment {
-                    if char != '/' {
-                        token.push(char);
-                        continue;
-                    }
-                    // walk backwards from the token looking for any /
-                    // byond ends multiline comments using any number of * followed by /
-                    // but NOT if there is a / before the first *
-                    let mut found = false;
-                    for char in token.chars().rev() {
-                        match char {
-                            '/' => {
-                                found = true;
-                                break;
-                            }
-                            '*' => {
-                                continue;
-                            }
-                            _ => {
-                                break;
-                            }
-                        }
-                    }
-                    if found {
-                        in_multiline_comment = false;
-                        token.push(char);
-                        line_tokens.push(DmToken::new(token));
-                        token = String::new();
-                        continue;
-                    }
                     continue;
                 }
 
@@ -111,16 +74,11 @@ impl DmPreProcessor {
                     if char != quote_char || token.ends_with('\\') {
                         token.push(char);
                     } else {
-                        line_tokens.push(DmToken::new(token));
-                        line_tokens.push(DmToken::new(quote_char.to_string()));
+                        tokens.push(DmToken::new(token));
+                        tokens.push(DmToken::new(quote_char.to_string()));
                         token = String::new();
                         in_quote = None;
                     }
-                    continue;
-                }
-
-                if token.is_empty() {
-                    token.push(char);
                     continue;
                 }
 
@@ -128,10 +86,10 @@ impl DmPreProcessor {
                     match char {
                         '"' | '\'' => {
                             if !token.is_empty() {
-                                line_tokens.push(DmToken::new(token));
+                                tokens.push(DmToken::new(token));
                                 token = String::new();
                             }
-                            line_tokens.push(DmToken::new(char.to_string()));
+                            tokens.push(DmToken::new(char.to_string()));
                             in_quote = Some(char);
                             continue;
                         }
@@ -146,10 +104,10 @@ impl DmPreProcessor {
                             continue;
                         }
                         if !token.is_empty() {
-                            line_tokens.push(DmToken::new(token));
+                            tokens.push(DmToken::new(token));
                             token = String::new();
                         }
-                        line_tokens.push(DmToken::new(char.to_string()));
+                        tokens.push(DmToken::new(char.to_string()));
                         in_quote = Some(char);
                         continue;
                     }
@@ -159,26 +117,12 @@ impl DmPreProcessor {
                             continue;
                         }
                     }
-                    '*' => {
-                        if token.ends_with('/') {
-                            in_multiline_comment = true;
-                            token.push(char);
-                            continue;
-                        }
-                    }
-                    '/' => {
-                        if token.ends_with('/') {
-                            in_comment = true;
-                            token.push(char);
-                            continue;
-                        }
-                    }
                     ' ' | '\t' => {
                         if token.ends_with(char) {
                             token.push(char);
                             continue;
                         } else if !token.is_empty() {
-                            line_tokens.push(DmToken::new(token));
+                            tokens.push(DmToken::new(token));
                             token = String::new();
                             token.push(char);
                             continue;
@@ -186,7 +130,7 @@ impl DmPreProcessor {
                     }
                     _ => {
                         if token.ends_with(&[' ', '\t']) {
-                            line_tokens.push(DmToken::new(token));
+                            tokens.push(DmToken::new(token));
                             token = String::new();
                             token.push(char);
                             continue;
@@ -218,22 +162,15 @@ impl DmPreProcessor {
                     continue;
                 }
 
-                line_tokens.push(DmToken::new(token));
+                tokens.push(DmToken::new(token));
                 token = String::new();
                 token.push(char);
             }
 
-            if in_quote.is_some() {
-                error!("unterminated quote, tokens so far: {:#?}", line_tokens);
-                std::process::exit(1);
-            }
-
             if !token.is_empty() {
-                line_tokens.push(DmToken::new(token));
+                tokens.push(DmToken::new(token));
             }
-            line_tokens.push(DmToken::new("\n".into()));
-            tokens.append(&mut line_tokens);
-            in_comment = false;
+            tokens.push(DmToken::new("\n".into()));
         }
 
         tokens
