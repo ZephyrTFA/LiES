@@ -1,0 +1,45 @@
+on: [push, pull_request]
+name: CI Suite
+jobs:
+  test:
+    name: "Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: "Setup Rust"
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: "Run Tests"
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all --verbose
+
+  clippy:
+    name: "Lints"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: "Setup Rust"
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: "Format"
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: "Clippy"
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
