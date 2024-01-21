@@ -99,7 +99,7 @@ impl DmPreProcessor {
 
                 match char {
                     '"' | '\'' => {
-                        if token.ends_with("\\") {
+                        if token.ends_with('\\') {
                             token.push(char);
                             continue;
                         }
@@ -112,7 +112,7 @@ impl DmPreProcessor {
                         continue;
                     }
                     '\\' => {
-                        if token.ends_with("\\") {
+                        if token.ends_with('\\') {
                             token.push(char);
                             continue;
                         }
