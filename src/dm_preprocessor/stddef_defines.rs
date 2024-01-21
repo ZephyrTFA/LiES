@@ -7,8 +7,8 @@ impl DmPreProcessor {
         let mut defines = HashMap::new();
 
         // DM_VERSION and DM_BUILD should match the version of BYOND we are compatible with.
-        DmDefineDefinition::new_basic_replace("DM_BUILD", "515").insert_into_map(&mut defines);
-        DmDefineDefinition::new_basic_replace("DM_VERSION", "1609").insert_into_map(&mut defines);
+        DmDefineDefinition::new_basic_replace("DM_VERSION", "515").insert_into_map(&mut defines);
+        DmDefineDefinition::new_basic_replace("DM_BUILD", "1609").insert_into_map(&mut defines);
 
         DmDefineDefinition::new_basic_replace("NORTH", "1").insert_into_map(&mut defines);
         DmDefineDefinition::new_basic_replace("SOUTH", "2").insert_into_map(&mut defines);

@@ -14,8 +14,18 @@ pub fn init() {
 
     let mut highest_log_level = log::LevelFilter::Info;
     if let Ok(value) = env::var("LIES_LOG_LEVEL") {
-        if let Ok(parsed) = value.parse() {
-            highest_log_level = parsed;
+        if let Ok(parsed) = value.parse::<i32>() {
+            highest_log_level = match parsed {
+                0 => LevelFilter::Error,
+                1 => LevelFilter::Warn,
+                2 => LevelFilter::Info,
+                3 => LevelFilter::Debug,
+                4 => LevelFilter::Trace,
+                _ => {
+                    eprintln!("Invalid value for LIES_LOG_LEVEL");
+                    exit(1);
+                }
+            }
         } else {
             match value.to_lowercase().as_str() {
                 "error" => highest_log_level = LevelFilter::Error,

@@ -17,5 +17,6 @@ pub fn main() -> Result<(), String> {
     info!("LiES -- Init");
 
     let mut parser = DmParser::new("D:/ss13/tgstation");
-    parser.load("tgstation.dme")
+    // parser.load("tgstation.dme")
+    parser.load(r"code\_compile_options.dm")
 }
