@@ -7,6 +7,9 @@ pub mod directive;
 pub mod preprocess_core;
 pub mod token_handling;
 
+#[cfg(test)]
+mod tests;
+
 /**
  * The preprocessor is responsible for handling all preprocessor directives.
  * When a file gets preprocessed it is converted into a list of tokens.
