@@ -2,7 +2,7 @@ use std::process::exit;
 
 use log::{error, warn};
 
-use crate::util::exit_codes::ERROR_CODE_UNKNOWN_DIRECTIVE;
+use crate::util::{exit_codes::ERROR_CODE_UNKNOWN_DIRECTIVE, ParseError};
 
 use super::{token_handling::DmToken, DmPreProcessor};
 
@@ -20,7 +20,7 @@ impl DmPreProcessor {
         &mut self,
         directive: &str,
         mut args: Vec<DmToken>,
-    ) -> Result<(), ()> {
+    ) -> Result<(), ParseError> {
         if directive == "else" {
             if !args.is_empty() {
                 warn!("`else` directive has arguments that will be ignored");

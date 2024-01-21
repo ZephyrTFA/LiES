@@ -1,14 +1,17 @@
 use log::{error, warn};
 
-use crate::dm_preprocessor::{
-    define_definition::DmDefineDefinition, token_handling::DmToken, DmPreProcessor,
+use crate::{
+    dm_preprocessor::{
+        define_definition::DmDefineDefinition, token_handling::DmToken, DmPreProcessor,
+    },
+    util::ParseError,
 };
 
 impl DmPreProcessor {
-    pub(super) fn handle_define(&mut self, args: &[DmToken]) -> Result<(), ()> {
+    pub(super) fn handle_define(&mut self, args: &[DmToken]) -> Result<(), ParseError> {
         if args.is_empty() {
             error!("`define` directive requires at least one argument");
-            return Err(());
+            return Err(ParseError::ERROR_DIRECTIVE_PARSE);
         }
 
         let name = args[0].value().to_owned();
