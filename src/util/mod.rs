@@ -3,10 +3,13 @@ use std::{
     path::PathBuf,
 };
 
+pub mod condense_lines;
 pub mod define_definition;
+pub mod determine_token_action;
 pub mod dm_file;
 pub mod exit_codes;
 pub mod log;
+pub mod start_new_token;
 
 #[derive(Debug)]
 pub struct ParseError(i32);
