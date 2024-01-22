@@ -34,38 +34,8 @@ impl PartialEq for DmToken {
 }
 
 impl DmPreProcessor {
-    fn condense_lines(&mut self, lines: &Vec<String>) -> Vec<String> {
-        if lines.is_empty() {
-            return vec![];
-        }
-
-        let mut condensed = vec![];
-
-        let mut lines = lines.clone();
-        while !lines.is_empty() {
-            let mut line = lines.remove(0);
-            while line.ends_with('\\') {
-                line.pop();
-                if !lines.is_empty() {
-                    line.push_str(&lines.remove(0));
-                }
-            }
-
-            condensed.push(line);
-        }
-
-        condensed
-    }
-
-    fn is_first_non_whitespace_char(line_tokens: &[DmToken]) -> bool {
-        line_tokens.is_empty()
-            || line_tokens
-                .iter()
-                .all(|token| token.value().chars().all(char::is_whitespace))
-    }
-
-    pub fn tokenize(&mut self, lines: &Vec<String>) -> Vec<DmToken> {
-        let condensed_lines: Vec<String> = self.condense_lines(lines);
+    pub fn tokenize(&mut self, lines: &[String]) -> Vec<DmToken> {
+        let condensed_lines: Vec<String> = condense_lines(lines);
         let mut tokens: Vec<DmToken> = vec![];
 
         let mut in_quote: Option<char> = None;
@@ -129,7 +99,7 @@ impl DmPreProcessor {
 
                 if token.is_empty() {
                     token.push(char);
-                    if char == '#' && Self::is_first_non_whitespace_char(&line_tokens) {
+                    if char == '#' && is_first_non_whitespace_char(&line_tokens) {
                         in_preprocessor = true;
                     }
                     continue;
@@ -198,7 +168,7 @@ impl DmPreProcessor {
                             line_tokens.push(DmToken::new(token));
                             token = String::new();
                             token.push(char);
-                            if char == '#' && Self::is_first_non_whitespace_char(&line_tokens) {
+                            if char == '#' && is_first_non_whitespace_char(&line_tokens) {
                                 in_preprocessor = true;
                             }
                             continue;
@@ -251,4 +221,37 @@ impl DmPreProcessor {
 
         tokens
     }
+}
+
+// Condenses all lines that end with a backslash into a single line.
+pub fn condense_lines(lines: &[String]) -> Vec<String> {
+    if lines.is_empty() {
+        return vec![];
+    }
+
+    let mut condensed = vec![];
+    let mut current_line = String::new();
+
+    for line in lines {
+        if line.ends_with('\\') {
+            current_line.push_str(&line[..line.len() - 1]);
+        } else {
+            current_line.push_str(line);
+            condensed.push(std::mem::take(&mut current_line));
+        }
+    }
+
+    if !current_line.is_empty() {
+        condensed.push(current_line);
+    }
+
+    condensed
+}
+
+// Returns true if the line is empty or only contains whitespace.
+pub fn is_first_non_whitespace_char(line_tokens: &[DmToken]) -> bool {
+    line_tokens.is_empty()
+        || line_tokens
+            .iter()
+            .all(|token| token.value().chars().all(char::is_whitespace))
 }
