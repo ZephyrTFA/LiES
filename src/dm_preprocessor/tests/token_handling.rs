@@ -209,7 +209,7 @@ fn test_tokenize_comment_multline_commented_bad_end() {
         " * This is a comment.".into(),
         " *".into(),
         " // /*/".into(), // this doen't end the comment because the ending is broken
-        "A lone single-quote '".into(), // single quotes will fail except in comments and the preprocessor
+        "A lone single-quote '".into(), // unmatched quotes will fail except in comments
         "A lone double-quote \"".into(), // these won't fail because the commend doesn't end in one of the previous line
     ];
 
