@@ -7,7 +7,7 @@ use crate::{
     util::ParseError,
 };
 
-impl DmPreProcessor {
+impl DmPreProcessor<'_> {
     pub(super) fn handle_define(&mut self, args: &[DmToken]) -> Result<(), ParseError> {
         if args.is_empty() {
             error!("`define` directive requires at least one argument");

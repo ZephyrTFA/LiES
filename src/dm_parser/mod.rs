@@ -10,15 +10,15 @@ use crate::{
     util::{dm_file::DmFile, exit_codes::ERROR_CODE_DIRECTORY_TRAVERSAL_FAILED},
 };
 
-pub struct DmParser {
-    preprocessor: DmPreProcessor,
+pub struct DmParser<'a> {
+    preprocessor: DmPreProcessor<'a>,
     /// The order in which files were included. Uses a relative path from the environment directory.
     include_order: Vec<PathBuf>,
     environment_directory: PathBuf,
     environment_traversal: Vec<PathBuf>,
 }
 
-impl DmParser {
+impl DmParser<'_> {
     pub fn new(environment_directory: impl Into<PathBuf>) -> Self {
         let environment_directory = environment_directory.into().canonicalize().unwrap();
         debug!(

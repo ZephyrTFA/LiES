@@ -5,7 +5,7 @@ use crate::{
     util::ParseError,
 };
 
-impl DmPreProcessor {
+impl DmPreProcessor<'_> {
     pub(super) fn handle_error(&mut self, args: &[DmToken]) -> Result<(), ParseError> {
         error!(
             "Compiler Error: `{}`",

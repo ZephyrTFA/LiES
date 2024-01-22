@@ -4,12 +4,16 @@ pub fn should_start_new_token(char: char, current_token: &str) -> bool {
         return false;
     }
 
-    let is_special_symbol = matches!(
-        char,
-        '"' | '\'' | '+' | '-' | '*' | '/' | '%' | '^' | '&' | '|' | '=' | '<' | '>' | '!'
-    );
+    let is_special_symbol = matches!(char, '"' | '\'' | '&' | '!');
     if is_special_symbol {
-        return true;
+        return !current_token.ends_with(char);
+    }
+
+    const MATH_OPERATORS: &[char; 10] = &['+', '-', '*', '/', '%', '^', '|', '=', '<', '>'];
+
+    let is_math_operator = MATH_OPERATORS.contains(&char);
+    if is_math_operator {
+        return !current_token.ends_with(|c| MATH_OPERATORS.contains(&c));
     }
 
     if char.is_whitespace() {
@@ -70,6 +74,6 @@ mod tests {
     fn test_no_transition() {
         assert!(!should_start_new_token('a', "text"));
         assert!(!should_start_new_token('3', "12"));
-        assert!(should_start_new_token('-', "-"));
+        assert!(!should_start_new_token('-', "-"));
     }
 }

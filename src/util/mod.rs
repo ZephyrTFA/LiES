@@ -10,6 +10,7 @@ pub mod dm_file;
 pub mod exit_codes;
 pub mod log;
 pub mod start_new_token;
+pub mod whitespace_char;
 
 #[derive(Debug)]
 pub struct ParseError(i32);

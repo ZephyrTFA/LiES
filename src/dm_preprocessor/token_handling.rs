@@ -1,4 +1,4 @@
-use std::{fmt::Display, process::exit};
+use std::{borrow::BorrowMut, fmt::Display, process::exit};
 
 use log::{debug, error};
 use once_cell::sync::Lazy;
@@ -46,10 +46,41 @@ impl PartialEq for DmToken {
 }
 
 #[derive(Debug, Default)]
-pub struct TokenizeState {
+pub struct TokenizeState<'a> {
     in_quote: Option<char>,
     in_comment: Option<InComment>,
     in_preprocessor: bool,
+    line_tokens: &'a [DmToken],
+}
+
+impl TokenizeState<'_> {
+    pub fn in_quote(&self) -> Option<&char> {
+        self.in_quote.as_ref()
+    }
+
+    pub fn in_comment(&self) -> Option<&InComment> {
+        self.in_comment.as_ref()
+    }
+
+    pub fn in_preprocessor(&self) -> bool {
+        self.in_preprocessor
+    }
+
+    pub fn line_tokens(&self) -> &[DmToken] {
+        self.line_tokens
+    }
+
+    pub fn set_in_quote(&mut self, quote: Option<char>) {
+        self.in_quote = quote;
+    }
+
+    pub fn set_in_comment(&mut self, comment: Option<InComment>) {
+        self.in_comment = comment;
+    }
+
+    pub fn set_in_preprocessor(&mut self, in_preprocessor: bool) {
+        self.in_preprocessor = in_preprocessor;
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -58,21 +89,20 @@ enum InComment {
     MultiLine = 2,
 }
 
-impl DmPreProcessor {
+impl DmPreProcessor<'_> {
     pub fn tokenize(&mut self, lines: &[String]) -> Vec<DmToken> {
         let condensed_lines: Vec<String> = condense_lines(lines);
         let mut tokens: Vec<DmToken> = vec![];
-        let mut in_quote: Option<char> = None;
-        let mut in_comment = false;
-        let mut in_multiline_comment = false;
-        let mut in_preprocessor = false;
 
         for line in condensed_lines {
             let mut line_tokens: Vec<DmToken> = vec![];
             let mut token = String::new();
+            self.tokenize_state.set_in_preprocessor(false);
 
             for char in line.chars() {
-                let next_action = determine_token_action(char, &token, in_quote);
+                let next_action =
+                    determine_token_action(self.tokenize_state.borrow_mut(), char, &token);
+
                 match next_action {
                     TokenAction::StartNewToken => {
                         if !token.is_empty() {
@@ -82,13 +112,6 @@ impl DmPreProcessor {
                     }
                     TokenAction::ContinueToken => {
                         token.push(char);
-                    }
-                    TokenAction::EndToken => {
-                        tokens.push(DmToken::new(token));
-                        token = String::new();
-                    }
-                    TokenAction::ChangeQuoteState(quote) => {
-                        in_quote = quote;
                     }
                     _ => {
                         error!(

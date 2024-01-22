@@ -7,7 +7,7 @@ use crate::{
     util::{exit_codes::ERROR_CODE_INVALID_INCLUDE_FORMAT, ParseError},
 };
 
-impl DmPreProcessor {
+impl DmPreProcessor<'_> {
     pub(super) fn handle_include(&mut self, args: &[DmToken]) -> Result<(), ParseError> {
         if args.len() != 3 {
             error!("Invalid argument format for `include`");

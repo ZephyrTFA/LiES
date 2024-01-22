@@ -6,7 +6,7 @@ use crate::{
     util::ParseError,
 };
 
-impl DmPreProcessor {
+impl DmPreProcessor<'_> {
     // parentheses are last because we only resolve them when all the ops inside of them are resolved
     const ORDER_OF_OPS: [&'static str; 9] = ["!", "!=", ">", ">=", "<", "<=", "&&", "||", "("];
 

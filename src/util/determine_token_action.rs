@@ -1,23 +1,28 @@
-use super::start_new_token::should_start_new_token;
+use std::process::exit;
+
+use crate::dm_preprocessor::token_handling::TokenizeState;
+
+use super::{
+    start_new_token::should_start_new_token, whitespace_char::is_first_non_whitespace_char,
+};
 
 #[derive(Debug, PartialEq)]
 pub enum TokenAction {
     StartNewToken,
     ContinueToken,
-    EndToken,
-    ChangeQuoteState(Option<char>),
     None,
 }
 
 // Determines what action should be taken for the current character.
 pub fn determine_token_action(
+    state: &mut TokenizeState,
     char: char,
     current_token: &str,
-    in_quote: Option<char>,
 ) -> TokenAction {
-    if let Some(quote_char) = in_quote {
-        if (char == quote_char && !current_token.ends_with('\\')) {
-            return TokenAction::ChangeQuoteState(None);
+    if let Some(quote_char) = state.in_quote() {
+        if (char == *quote_char && !current_token.ends_with('\\')) {
+            state.set_in_quote(None);
+            return TokenAction::StartNewToken;
         } else {
             return TokenAction::ContinueToken;
         }
@@ -26,9 +31,21 @@ pub fn determine_token_action(
     match char {
         '"' | '\'' => {
             if !current_token.is_empty() {
-                return TokenAction::StartNewToken;
+                panic!("This should not occur")
             }
-            TokenAction::ChangeQuoteState(Some(char))
+            state.set_in_quote(Some(char));
+            TokenAction::StartNewToken
+        }
+        '#' => {
+            if is_first_non_whitespace_char(state.line_tokens()) {
+                state.set_in_preprocessor(true);
+            }
+
+            if should_start_new_token(char, current_token) {
+                TokenAction::StartNewToken
+            } else {
+                TokenAction::ContinueToken
+            }
         }
         '.' => TokenAction::StartNewToken,
         ' ' | '\t' => {

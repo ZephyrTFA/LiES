@@ -5,7 +5,7 @@ use crate::{
     util::ParseError,
 };
 
-impl DmPreProcessor {
+impl DmPreProcessor<'_> {
     pub fn handle_undef(&mut self, args: &[DmToken]) -> Result<(), ParseError> {
         if args.len() != 1 {
             warn!("`undef` requires one argument");
