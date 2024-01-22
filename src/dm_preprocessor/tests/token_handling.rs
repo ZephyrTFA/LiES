@@ -209,7 +209,7 @@ fn test_tokenize_comment_multline_commented_bad_end() {
         " * This is a comment.".into(),
         " *".into(),
         " // /*/".into(), // this doen't end the comment because the ending is broken
-        "A lone single-quote '".into(), // single quotes will fail except in comments
+        "A lone single-quote '".into(), // single quotes will fail except in comments and the preprocessor
         "A lone double-quote \"".into(), // these won't fail because the commend doesn't end in one of the previous line
     ];
 
@@ -258,6 +258,50 @@ fn test_tokenize_comment_multline_commented_bad_end() {
         DmToken::from("quote"),
         DmToken::from(" "),
         DmToken::from("\""),
+        DmToken::from("\n"),
+    ];
+
+    let result = preprocesser.tokenize(&lines);
+    assert_eq!(result, expected);
+}
+
+fn test_tokenize_preprocess_unmatched_quotes() {
+    let mut preprocesser = DmPreProcessor::new();
+    let lines = vec![
+        "This is a test.".into(),
+        "#warn This shouldn't fail.".into(),
+        "#error Nor \"this".into(),
+    ];
+
+    let expected = vec![
+        DmToken::from("This"),
+        DmToken::from(" "),
+        DmToken::from("is"),
+        DmToken::from(" "),
+        DmToken::from("a"),
+        DmToken::from(" "),
+        DmToken::from("test"),
+        DmToken::from("."),
+        DmToken::from("\n"),
+        DmToken::from("#"),
+        DmToken::from("warn"),
+        DmToken::from(" "),
+        DmToken::from("This"),
+        DmToken::from(" "),
+        DmToken::from("shouldn"),
+        DmToken::from("'"),
+        DmToken::from("t"),
+        DmToken::from(" "),
+        DmToken::from("fail"),
+        DmToken::from("."),
+        DmToken::from("\n"),
+        DmToken::from("#"),
+        DmToken::from("error"),
+        DmToken::from(" "),
+        DmToken::from("Nor"),
+        DmToken::from(" "),
+        DmToken::from("\""),
+        DmToken::from("this"),
         DmToken::from("\n"),
     ];
 
