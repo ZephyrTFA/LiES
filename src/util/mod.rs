@@ -3,10 +3,12 @@ use std::{
     path::PathBuf,
 };
 
+pub mod condense_lines;
 pub mod define_definition;
 pub mod dm_file;
 pub mod exit_codes;
 pub mod log;
+pub mod whitespace_char;
 
 #[derive(Debug)]
 pub struct ParseError(i32);
