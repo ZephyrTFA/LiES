@@ -18,7 +18,8 @@ fn test_special_symbols() {
 fn test_whitespace_transition() {
     assert!(DmPreProcessor::should_start_new_token(' ', "text"));
     assert!(!DmPreProcessor::should_start_new_token(' ', " "));
-    assert!(DmPreProcessor::should_start_new_token('\t', ""));
+    assert!(!DmPreProcessor::should_start_new_token('\t', ""));
+    assert!(DmPreProcessor::should_start_new_token(' ', "\t"));
 }
 
 #[test]

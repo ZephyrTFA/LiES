@@ -166,6 +166,7 @@ impl DmPreProcessor {
         if is_special_symbol {
             return true;
         }
+
         let is_whitespace_transition = char.is_whitespace() != current_token.trim_end().is_empty()
             && !current_token.trim_end().ends_with(char);
         if is_whitespace_transition {
