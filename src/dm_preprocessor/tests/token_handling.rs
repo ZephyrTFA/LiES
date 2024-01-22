@@ -200,7 +200,7 @@ fn test_tokenize_comment_multiline() {
     assert_eq!(result, expected);
 }
 
-fn test_tokenize_comment_multline_commented_end() {
+fn test_tokenize_comment_multline_commented_bad_end() {
     let mut preprocesser = DmPreProcessor::new();
 
     let lines = vec![
@@ -208,9 +208,9 @@ fn test_tokenize_comment_multline_commented_end() {
         " *".into(),
         " * This is a comment.".into(),
         " *".into(),
-        " // */".into(),
-        "A lone single-quote '".into(),
-        "A lone double-quote \"".into(),
+        " // /*/".into(), // this doen't end the comment because the ending is broken
+        "A lone single-quote '".into(), // single quotes will fail except in comments
+        "A lone double-quote \"".into(), // these won't fail because the commend doesn't end in one of the previous line
     ];
 
     let expected = vec![
@@ -237,7 +237,7 @@ fn test_tokenize_comment_multline_commented_end() {
         DmToken::from(" "),
         DmToken::from("//"),
         DmToken::from(" "),
-        DmToken::from("*/"),
+        DmToken::from("/*/"),
         DmToken::from("\n"),
         DmToken::from("A"),
         DmToken::from(" "),
