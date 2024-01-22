@@ -45,6 +45,19 @@ impl PartialEq for DmToken {
     }
 }
 
+#[derive(Debug, Default)]
+pub struct TokenizeState {
+    in_quote: Option<char>,
+    in_comment: Option<InComment>,
+    in_preprocessor: bool,
+}
+
+#[derive(Debug, PartialEq)]
+enum InComment {
+    SingleLine = 1,
+    MultiLine = 2,
+}
+
 impl DmPreProcessor {
     pub fn tokenize(&mut self, lines: &[String]) -> Vec<DmToken> {
         let condensed_lines: Vec<String> = condense_lines(lines);
