@@ -20,6 +20,10 @@ pub fn should_start_new_token(char: char, current_token: &str) -> bool {
         return true;
     }
 
+    if current_token.ends_with('#') {
+        return !current_token.ends_with(char);
+    }
+
     let is_digit_transition =
         char.is_ascii_digit() != current_token.chars().all(|c| c.is_ascii_digit());
     if is_digit_transition {

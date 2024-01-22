@@ -15,6 +15,10 @@ pub fn determine_token_action(
     current_token: &str,
     in_quote: Option<char>,
 ) -> TokenAction {
+    if current_token.is_empty() {
+        return TokenAction::ContinueToken;
+    }
+
     match in_quote {
         Some(quote_char) => {
             if char == quote_char && !current_token.ends_with('\\') {
@@ -38,6 +42,13 @@ pub fn determine_token_action(
                     TokenAction::StartNewToken
                 } else {
                     TokenAction::None
+                }
+            }
+            '#' => {
+                if !current_token.ends_with(char) {
+                    TokenAction::StartNewToken
+                } else {
+                    TokenAction::ContinueToken
                 }
             }
             _ => {
