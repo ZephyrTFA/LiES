@@ -113,3 +113,154 @@ fn test_condense_lines() {
 
     assert_eq!(result, expected);
 }
+
+#[test]
+fn test_tokenize_comment() {
+    let mut preprocessor = DmPreProcessor::new();
+    let lines = vec![
+        "This is a test.".into(),
+        "// This is a comment.".into(),
+        "Another test.".into(),
+    ];
+
+    let expected = vec![
+        DmToken::from("This"),
+        DmToken::from(" "),
+        DmToken::from("is"),
+        DmToken::from(" "),
+        DmToken::from("a"),
+        DmToken::from(" "),
+        DmToken::from("test"),
+        DmToken::from("."),
+        DmToken::from("\n"),
+        DmToken::from("//"),
+        DmToken::from(" "),
+        DmToken::from("This"),
+        DmToken::from(" "),
+        DmToken::from("is"),
+        DmToken::from(" "),
+        DmToken::from("a"),
+        DmToken::from(" "),
+        DmToken::from("comment"),
+        DmToken::from("."),
+        DmToken::from("\n"),
+        DmToken::from("Another"),
+        DmToken::from(" "),
+        DmToken::from("test"),
+        DmToken::from("."),
+        DmToken::from("\n"),
+    ];
+
+    let result = preprocessor.tokenize(&lines);
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_tokenize_comment_multiline() {
+    let mut preprocessor = DmPreProcessor::new();
+    let lines = vec![
+        "This is a test.".into(),
+        "/*".into(),
+        "This is a comment.".into(),
+        "*/".into(),
+        "Another test.".into(),
+    ];
+
+    let expected = vec![
+        DmToken::from("This"),
+        DmToken::from(" "),
+        DmToken::from("is"),
+        DmToken::from(" "),
+        DmToken::from("a"),
+        DmToken::from(" "),
+        DmToken::from("test"),
+        DmToken::from("."),
+        DmToken::from("\n"),
+        DmToken::from("/*"),
+        DmToken::from("\n"),
+        DmToken::from("This"),
+        DmToken::from(" "),
+        DmToken::from("is"),
+        DmToken::from(" "),
+        DmToken::from("a"),
+        DmToken::from(" "),
+        DmToken::from("comment"),
+        DmToken::from("."),
+        DmToken::from("\n"),
+        DmToken::from("*/"),
+        DmToken::from("\n"),
+        DmToken::from("Another"),
+        DmToken::from(" "),
+        DmToken::from("test"),
+        DmToken::from("."),
+        DmToken::from("\n"),
+    ];
+
+    let result = preprocessor.tokenize(&lines);
+    assert_eq!(result, expected);
+}
+
+fn test_tokenize_comment_multline_commented_end() {
+    let mut preprocesser = DmPreProcessor::new();
+
+    let lines = vec![
+        "/*".into(),
+        " *".into(),
+        " * This is a comment.".into(),
+        " *".into(),
+        " // */".into(),
+        "A lone single-quote '".into(),
+        "A lone double-quote \"".into(),
+    ];
+
+    let expected = vec![
+        DmToken::from("/*"),
+        DmToken::from("\n"),
+        DmToken::from(" "),
+        DmToken::from("*"),
+        DmToken::from("\n"),
+        DmToken::from(" "),
+        DmToken::from("*"),
+        DmToken::from(" "),
+        DmToken::from("This"),
+        DmToken::from(" "),
+        DmToken::from("is"),
+        DmToken::from(" "),
+        DmToken::from("a"),
+        DmToken::from(" "),
+        DmToken::from("comment"),
+        DmToken::from("."),
+        DmToken::from("\n"),
+        DmToken::from(" "),
+        DmToken::from("*"),
+        DmToken::from("\n"),
+        DmToken::from(" "),
+        DmToken::from("//"),
+        DmToken::from(" "),
+        DmToken::from("*/"),
+        DmToken::from("\n"),
+        DmToken::from("A"),
+        DmToken::from(" "),
+        DmToken::from("lone"),
+        DmToken::from(" "),
+        DmToken::from("single"),
+        DmToken::from("-"),
+        DmToken::from("quote"),
+        DmToken::from(" "),
+        DmToken::from("'"),
+        DmToken::from("\n"),
+        DmToken::from("A"),
+        DmToken::from(" "),
+        DmToken::from("lone"),
+        DmToken::from(" "),
+        DmToken::from("double"),
+        DmToken::from("-"),
+        DmToken::from("quote"),
+        DmToken::from(" "),
+        DmToken::from("\""),
+        DmToken::from("\n"),
+    ];
+
+    let result = preprocesser.tokenize(&lines);
+    assert_eq!(result, expected);
+}
