@@ -4,6 +4,8 @@ use log::{debug, error, trace};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
+use crate::util::{condense_lines::condense_lines, whitespace_char::is_first_non_whitespace_char};
+
 use super::DmPreProcessor;
 
 #[derive(Debug, Clone)]
@@ -14,6 +16,14 @@ pub struct DmToken {
 impl Display for DmToken {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
+    }
+}
+
+impl From<&str> for DmToken {
+    fn from(value: &str) -> Self {
+        Self {
+            value: value.to_string(),
+        }
     }
 }
 
@@ -221,37 +231,4 @@ impl DmPreProcessor {
 
         tokens
     }
-}
-
-// Condenses all lines that end with a backslash into a single line.
-pub fn condense_lines(lines: &[String]) -> Vec<String> {
-    if lines.is_empty() {
-        return vec![];
-    }
-
-    let mut condensed = vec![];
-    let mut current_line = String::new();
-
-    for line in lines {
-        if line.ends_with('\\') {
-            current_line.push_str(&line[..line.len() - 1]);
-        } else {
-            current_line.push_str(line);
-            condensed.push(std::mem::take(&mut current_line));
-        }
-    }
-
-    if !current_line.is_empty() {
-        condensed.push(current_line);
-    }
-
-    condensed
-}
-
-// Returns true if the line is empty or only contains whitespace.
-pub fn is_first_non_whitespace_char(line_tokens: &[DmToken]) -> bool {
-    line_tokens.is_empty()
-        || line_tokens
-            .iter()
-            .all(|token| token.value().chars().all(char::is_whitespace))
 }
