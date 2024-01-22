@@ -265,6 +265,7 @@ fn test_tokenize_comment_multline_commented_bad_end() {
     assert_eq!(result, expected);
 }
 
+#[test]
 fn test_tokenize_preprocess_unmatched_quotes() {
     let mut preprocesser = DmPreProcessor::new();
     let lines = vec![
