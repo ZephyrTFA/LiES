@@ -49,14 +49,15 @@ impl DmPreProcessor {
     pub fn tokenize(&mut self, lines: &[String]) -> Vec<DmToken> {
         let condensed_lines: Vec<String> = condense_lines(lines);
         let mut tokens: Vec<DmToken> = vec![];
-
         let mut in_quote: Option<char> = None;
         let mut in_comment = false;
         let mut in_multiline_comment = false;
         let mut in_preprocessor = false;
 
         for line in condensed_lines {
+            let mut line_tokens: Vec<DmToken> = vec![];
             let mut token = String::new();
+
             for char in line.chars() {
                 let next_action = determine_token_action(char, &token, in_quote);
                 match next_action {
