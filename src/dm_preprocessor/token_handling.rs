@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, process::exit};
 
 use log::{debug, error};
 use once_cell::sync::Lazy;
@@ -39,6 +39,7 @@ impl PartialEq for DmToken {
     }
 }
 
+#[derive(Debug, PartialEq)]
 enum TokenAction {
     StartNewToken,
     ContinueToken,
@@ -56,7 +57,8 @@ impl DmPreProcessor {
         for line in condensed_lines {
             let mut token = String::new();
             for char in line.chars() {
-                match Self::determine_token_action(char, &token, in_quote) {
+                let next_action = Self::determine_token_action(char, &token, in_quote);
+                match next_action {
                     TokenAction::StartNewToken => {
                         if !token.is_empty() {
                             tokens.push(DmToken::new(token));
@@ -73,7 +75,13 @@ impl DmPreProcessor {
                     TokenAction::ChangeQuoteState(quote) => {
                         in_quote = quote;
                     }
-                    _ => {}
+                    _ => {
+                        error!(
+                            "Unexpected token action `{:?}` with char {}",
+                            next_action, char
+                        );
+                        exit(1);
+                    }
                 }
             }
 
@@ -155,7 +163,7 @@ impl DmPreProcessor {
 
     // Determines if a new token should be started based on the current character and the current token.
     pub fn should_start_new_token(char: char, current_token: &str) -> bool {
-        if current_token.ends_with('\\') {
+        if current_token.ends_with('\\') || current_token.is_empty() {
             return false;
         }
 
@@ -167,9 +175,11 @@ impl DmPreProcessor {
             return true;
         }
 
-        let is_whitespace_transition = char.is_whitespace() != current_token.trim_end().is_empty()
-            && !current_token.trim_end().ends_with(char);
-        if is_whitespace_transition {
+        if char.is_whitespace() {
+            return !current_token.ends_with(char);
+        }
+
+        if current_token.ends_with(char::is_whitespace) {
             return true;
         }
 

@@ -8,7 +8,7 @@ pub mod preprocess_core;
 mod stddef_defines;
 pub mod token_handling;
 
-#[cfg(test)]
+// #[cfg(test)]
 mod tests;
 
 /**
