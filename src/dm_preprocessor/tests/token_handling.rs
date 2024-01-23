@@ -1,5 +1,8 @@
 use std::vec;
 
+use ::log::trace;
+use dotenv::dotenv;
+
 use crate::{
     dm_preprocessor::{token_handling::DmToken, DmPreProcessor},
     util::log,
@@ -405,6 +408,99 @@ fn test_tokenize_preprocess_unmatched_quotes() {
         DmToken::from(" "),
         DmToken::from("\""),
         DmToken::from("this"),
+        DmToken::from("\n"),
+    ];
+
+    let result = preprocesser.tokenize(&lines);
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_hard_lines() {
+    let mut preprocesser = DmPreProcessor::new();
+
+    let mut lines = vec![
+        "\t\t\t\tparts += \"[FOURSPACES]First Death: <b>[ded[\"name\"]], [ded[\"role\"]], at [ded[\"area\"]]. Damage taken: [ded[\"damage\"]].[ded[\"last_words\"] ? \" Their last words were: \\\"[ded[\"last_words\"]]\\\"\" : \"\"]</b>\""
+    ];
+
+    let expected = vec![
+        DmToken::from("\t\t\t\t"),
+        DmToken::from("parts"),
+        DmToken::from(" "),
+        DmToken::from("+"),
+        DmToken::from("="),
+        DmToken::from(" "),
+        DmToken::from("\""),
+        DmToken::from("["),
+        DmToken::from("FOURSPACES"),
+        DmToken::from("]"),
+        DmToken::from("First Death: <b>"),
+        DmToken::from("["),
+        DmToken::from("ded"),
+        DmToken::from("["),
+        DmToken::from("\""),
+        DmToken::from("name"),
+        DmToken::from("\""),
+        DmToken::from("]"),
+        DmToken::from("]"),
+        DmToken::from(", "),
+        DmToken::from("["),
+        DmToken::from("ded"),
+        DmToken::from("["),
+        DmToken::from("\""),
+        DmToken::from("role"),
+        DmToken::from("\""),
+        DmToken::from("]"),
+        DmToken::from("]"),
+        DmToken::from(", at "),
+        DmToken::from("["),
+        DmToken::from("ded"),
+        DmToken::from("["),
+        DmToken::from("\""),
+        DmToken::from("area"),
+        DmToken::from("\""),
+        DmToken::from("]"),
+        DmToken::from("]"),
+        DmToken::from(". Damage taken: "),
+        DmToken::from("["),
+        DmToken::from("ded"),
+        DmToken::from("["),
+        DmToken::from("\""),
+        DmToken::from("damage"),
+        DmToken::from("\""),
+        DmToken::from("]"),
+        DmToken::from("]"),
+        DmToken::from("."),
+        DmToken::from("["),
+        DmToken::from("ded"),
+        DmToken::from("["),
+        DmToken::from("\""),
+        DmToken::from("last_words"),
+        DmToken::from("\""),
+        DmToken::from("]"),
+        DmToken::from(" "),
+        DmToken::from("?"),
+        DmToken::from(" "),
+        DmToken::from("\""),
+        DmToken::from(" Their last words were: \\\""),
+        DmToken::from("["),
+        DmToken::from("ded"),
+        DmToken::from("["),
+        DmToken::from("\""),
+        DmToken::from("last_words"),
+        DmToken::from("\""),
+        DmToken::from("]"),
+        DmToken::from("]"),
+        DmToken::from("\\\""),
+        DmToken::from("\""),
+        DmToken::from(" "),
+        DmToken::from(":"),
+        DmToken::from(" "),
+        DmToken::from("\""),
+        DmToken::from("\""),
+        DmToken::from("]"),
+        DmToken::from("</b>"),
+        DmToken::from("\""),
         DmToken::from("\n"),
     ];
 

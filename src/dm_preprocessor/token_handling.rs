@@ -6,6 +6,7 @@ use regex::Regex;
 
 use crate::util::{
     condense_lines::condense_lines,
+    count_backslashes,
     determine_token_action::{determine_token_action, TokenAction},
 };
 
@@ -58,10 +59,55 @@ pub struct TokenizeState {
     in_preprocessor: bool,
     line_tokens: Vec<DmToken>,
     string_interop_count: usize,
+    unmatched_brackets: Vec<usize>,
+    string_literal: bool,
 }
 
 impl TokenizeState {
+    pub fn string_literal(&self) -> bool {
+        self.string_literal
+    }
+
+    pub fn set_string_literal(&mut self, string_literal: bool) {
+        if string_literal != self.string_literal {
+            trace!("Setting string literal to true");
+        } else {
+            trace!("Setting string literal to false");
+        }
+        self.string_literal = string_literal;
+    }
+
+    pub fn unmatched_brackets(&self) -> bool {
+        if self.unmatched_brackets.is_empty() {
+            return false;
+        }
+        self.unmatched_brackets.last().unwrap() > &0
+    }
+
+    pub fn increment_unmatched_brackets(&mut self) {
+        let value = if self.unmatched_brackets.is_empty() {
+            1
+        } else {
+            self.unmatched_brackets.pop().unwrap() + 1
+        };
+        self.unmatched_brackets.push(value);
+        trace!(
+            "Incrementing unmatched brackets to {}",
+            self.unmatched_brackets.last().unwrap()
+        );
+    }
+
+    pub fn decrement_unmatched_brackets(&mut self) {
+        let value = self.unmatched_brackets.pop().unwrap() - 1;
+        self.unmatched_brackets.push(value);
+        trace!(
+            "Decrementing unmatched brackets to {}",
+            self.unmatched_brackets.last().unwrap()
+        );
+    }
+
     pub fn increment_string_interop_count(&mut self) {
+        self.unmatched_brackets.push(0);
         self.string_interop_count += 1;
         trace!(
             "Incrementing string interop count to {}",
@@ -70,6 +116,9 @@ impl TokenizeState {
     }
 
     pub fn decrement_string_interop_count(&mut self) {
+        if self.unmatched_brackets.pop().unwrap() != 0 {
+            panic!("Unmatched brackets in string interop");
+        }
         self.string_interop_count -= 1;
         trace!(
             "Decrementing string interop count to {}",
@@ -157,21 +206,7 @@ impl TokenizeState {
         if last.is_none() {
             return false;
         }
-
-        let last = last.unwrap();
-        if !last.value.ends_with('\\') {
-            return false;
-        }
-
-        let mut reverse = last.value.chars().rev();
-        let mut total = 0;
-        for char in reverse {
-            if char != '\\' {
-                break;
-            }
-            total += 1;
-        }
-        total % 2 == 1
+        count_backslashes(last.unwrap().value()) % 2 == 1
     }
 }
 
@@ -187,7 +222,7 @@ impl DmPreProcessor {
 
             trace!("Tokenizing line: `{}`", line);
             for char in line.chars() {
-                trace!("Char: `{}`", char);
+                trace!("Char: `{}`", char.escape_debug());
                 let next_action = determine_token_action(&mut self.tokenize_state, char, &token);
                 match next_action {
                     TokenAction::StartNewToken => {
@@ -232,6 +267,16 @@ impl DmPreProcessor {
                     self.tokenize_state.in_quote().unwrap(),
                     line
                 );
+                panic!();
+            }
+
+            if self.tokenize_state.unmatched_brackets() {
+                error!("Unmatched brackets in line `{}`", line);
+                panic!();
+            }
+
+            if self.tokenize_state.in_string_interop() {
+                error!("Unmatched string interop in line `{}`", line);
                 panic!();
             }
         }

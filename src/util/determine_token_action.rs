@@ -5,7 +5,8 @@ use log::error;
 use crate::dm_preprocessor::token_handling::TokenizeState;
 
 use super::{
-    start_new_token::get_default_token_action, whitespace_char::is_first_non_whitespace_char,
+    count_backslashes, start_new_token::get_default_token_action,
+    whitespace_char::is_first_non_whitespace_char,
 };
 
 #[derive(Debug, PartialEq)]
@@ -41,12 +42,15 @@ pub fn determine_token_action(
     current_token: &str,
 ) -> TokenAction {
     if let Some(quote_char) = state.in_quote() {
-        if (char == *quote_char && !current_token.ends_with('\\')) {
+        if (char == *quote_char && count_backslashes(current_token) % 2 == 0) {
             state.set_in_quote(None);
             return TokenAction::StartNewToken;
         } else {
             return match char {
-                '[' if state.in_quote() == Some(&'"') => {
+                '[' if state.in_quote() == Some(&'"')
+                    && !state.string_literal()
+                    && count_backslashes(current_token) % 2 == 0 =>
+                {
                     state.increment_string_interop_count();
                     state.set_in_quote(None);
                     TokenAction::IsolateToken
@@ -57,9 +61,22 @@ pub fn determine_token_action(
     }
 
     match char {
-        ']' if state.in_string_interop() => {
-            state.decrement_string_interop_count();
-            state.set_in_quote(Some('"'));
+        ']' if !state.in_comment_any() && !state.string_literal() => {
+            if state.is_last_token_an_escape() {
+                return get_default_token_action(char, current_token);
+            } else if state.unmatched_brackets() {
+                state.decrement_unmatched_brackets();
+            } else if state.in_string_interop() {
+                state.decrement_string_interop_count();
+                state.set_in_quote(Some('"'));
+            }
+            TokenAction::IsolateToken
+        }
+        '[' if !state.in_comment_any() && !state.string_literal() => {
+            if state.is_last_token_an_escape() {
+                return get_default_token_action(char, current_token);
+            }
+            state.increment_unmatched_brackets();
             TokenAction::IsolateToken
         }
         '"' | '\'' => {
@@ -75,6 +92,7 @@ pub fn determine_token_action(
             }
 
             state.set_in_quote(Some(char));
+            state.set_string_literal(current_token.ends_with('@'));
             TokenAction::IsolateToken
         }
         '#' => {
