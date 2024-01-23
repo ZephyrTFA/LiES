@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::{define_definition::DmDefineDefinition, DmPreProcessor};
 
-impl DmPreProcessor<'_> {
+impl DmPreProcessor {
     pub(super) fn initial_defines() -> HashMap<String, DmDefineDefinition> {
         let mut defines = HashMap::new();
 

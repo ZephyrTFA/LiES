@@ -15,7 +15,7 @@ pub mod include;
 pub mod undef;
 pub mod warn;
 
-impl DmPreProcessor<'_> {
+impl DmPreProcessor {
     pub(super) fn handle_directive(
         &mut self,
         directive: &str,

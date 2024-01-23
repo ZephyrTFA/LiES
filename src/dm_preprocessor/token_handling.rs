@@ -39,6 +39,12 @@ impl From<&str> for DmToken {
     }
 }
 
+impl From<String> for DmToken {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
 impl PartialEq for DmToken {
     fn eq(&self, other: &Self) -> bool {
         self.value == other.value
@@ -46,14 +52,14 @@ impl PartialEq for DmToken {
 }
 
 #[derive(Debug, Default)]
-pub struct TokenizeState<'a> {
+pub struct TokenizeState {
     in_quote: Option<char>,
     in_comment: Option<InComment>,
     in_preprocessor: bool,
-    line_tokens: &'a [DmToken],
+    line_tokens: Vec<DmToken>,
 }
 
-impl TokenizeState<'_> {
+impl TokenizeState {
     pub fn in_quote(&self) -> Option<&char> {
         self.in_quote.as_ref()
     }
@@ -67,7 +73,7 @@ impl TokenizeState<'_> {
     }
 
     pub fn line_tokens(&self) -> &[DmToken] {
-        self.line_tokens
+        &self.line_tokens
     }
 
     pub fn set_in_quote(&mut self, quote: Option<char>) {
@@ -81,32 +87,40 @@ impl TokenizeState<'_> {
     pub fn set_in_preprocessor(&mut self, in_preprocessor: bool) {
         self.in_preprocessor = in_preprocessor;
     }
+
+    pub fn finalize_line_tokens(&mut self) -> Vec<DmToken> {
+        let mut line_tokens = vec![];
+        std::mem::swap(&mut line_tokens, &mut self.line_tokens);
+        line_tokens
+    }
+
+    pub fn add_line_token(&mut self, token: impl Into<DmToken>) {
+        self.line_tokens.push(token.into());
+    }
 }
 
 #[derive(Debug, PartialEq)]
-enum InComment {
+pub enum InComment {
     SingleLine = 1,
     MultiLine = 2,
 }
 
-impl DmPreProcessor<'_> {
+impl DmPreProcessor {
     pub fn tokenize(&mut self, lines: &[String]) -> Vec<DmToken> {
         let condensed_lines: Vec<String> = condense_lines(lines);
         let mut tokens: Vec<DmToken> = vec![];
 
         for line in condensed_lines {
-            let mut line_tokens: Vec<DmToken> = vec![];
             let mut token = String::new();
             self.tokenize_state.set_in_preprocessor(false);
 
             for char in line.chars() {
-                let next_action =
-                    determine_token_action(self.tokenize_state.borrow_mut(), char, &token);
+                let next_action = determine_token_action(&mut self.tokenize_state, char, &token);
 
                 match next_action {
                     TokenAction::StartNewToken => {
                         if !token.is_empty() {
-                            tokens.push(DmToken::new(token));
+                            self.tokenize_state.add_line_token(token);
                         }
                         token = char.to_string();
                     }
@@ -115,7 +129,7 @@ impl DmPreProcessor<'_> {
                     }
                     _ => {
                         error!(
-                            "Unexpected token action `{:?}` with char {}",
+                            "Unexpected token action `{}` with char {}",
                             next_action, char
                         );
                         exit(1);
@@ -124,9 +138,10 @@ impl DmPreProcessor<'_> {
             }
 
             if !token.is_empty() {
-                tokens.push(DmToken::new(token));
+                self.tokenize_state.add_line_token(token);
             }
-            tokens.push(DmToken::new("\n".into()));
+            self.tokenize_state.add_line_token("\n");
+            tokens.append(&mut self.tokenize_state.finalize_line_tokens());
         }
 
         tokens

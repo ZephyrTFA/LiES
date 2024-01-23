@@ -1,4 +1,4 @@
-use std::process::exit;
+use std::{fmt::Display, process::exit};
 
 use crate::dm_preprocessor::token_handling::TokenizeState;
 
@@ -8,9 +8,22 @@ use super::{
 
 #[derive(Debug, PartialEq)]
 pub enum TokenAction {
+    /// Start a new token with the current character.
     StartNewToken,
+    /// Add the character to the current token.
     ContinueToken,
+    /// Ignore the current character.
     None,
+}
+
+impl Display for TokenAction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TokenAction::StartNewToken => write!(f, "StartNewToken"),
+            TokenAction::ContinueToken => write!(f, "ContinueToken"),
+            TokenAction::None => write!(f, "None"),
+        }
+    }
 }
 
 // Determines what action should be taken for the current character.

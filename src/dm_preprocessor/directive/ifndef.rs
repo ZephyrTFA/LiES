@@ -5,7 +5,7 @@ use crate::{
     util::ParseError,
 };
 
-impl DmPreProcessor<'_> {
+impl DmPreProcessor {
     pub(super) fn handle_ifndef(&mut self, args: &[DmToken]) -> Result<(), ParseError> {
         if args.is_empty() {
             return Err(ParseError::ERROR_DIRECTIVE_PARSE);

@@ -15,22 +15,22 @@ mod tests;
  * The preprocessor is responsible for handling all preprocessor directives.
  * When a file gets preprocessed it is converted into a list of tokens.
  */
-pub struct DmPreProcessor<'a> {
+pub struct DmPreProcessor {
     defines: HashMap<String, DmDefineDefinition>,
     logical_skip_levels: usize, // if this somehow gets too big, find the nearest bar
     tokenize_in_string: bool,
     tokenize_in_quote: bool,
     pending_includes: Vec<PathBuf>,
-    tokenize_state: TokenizeState<'a>,
+    tokenize_state: TokenizeState,
 }
 
-impl Default for DmPreProcessor<'_> {
+impl Default for DmPreProcessor {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl DmPreProcessor<'_> {
+impl DmPreProcessor {
     pub fn new() -> Self {
         Self {
             defines: Self::initial_defines(),
