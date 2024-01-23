@@ -1,4 +1,5 @@
 use std::{
+    ffi::OsStr,
     path::{Path, PathBuf},
     process::exit,
 };
@@ -46,7 +47,7 @@ impl DmParser {
         };
 
         let wanted_path = file.into();
-        if wanted_path.extension().unwrap() == "dmm" {
+        if wanted_path.extension() == Some(OsStr::new("dmm")) {
             return Ok(());
         }
 

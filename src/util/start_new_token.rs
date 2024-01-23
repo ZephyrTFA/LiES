@@ -51,8 +51,10 @@ pub fn get_default_token_action(char: char, current_token: &str) -> TokenAction 
         };
     }
 
-    if current_token.ends_with(|char: char| char.is_alphanumeric()) {
-        return if char.is_alphanumeric() {
+    static IS_VALID_IDENT_CHAR: fn(char) -> bool =
+        |char: char| char.is_alphanumeric() || char == '_';
+    if current_token.ends_with(IS_VALID_IDENT_CHAR) {
+        return if IS_VALID_IDENT_CHAR(char) {
             TokenAction::ContinueToken
         } else {
             TokenAction::StartNewToken
@@ -102,5 +104,13 @@ mod tests {
         assert!(get_default_token_action('a', "text") == TokenAction::ContinueToken);
         assert!(get_default_token_action('3', "12") == TokenAction::ContinueToken);
         assert!(get_default_token_action('-', "-") == TokenAction::ContinueToken);
+    }
+
+    #[test]
+    fn test_underscores_in_alphanumeric() {
+        assert!(get_default_token_action('_', "text") == TokenAction::ContinueToken);
+        assert!(get_default_token_action('_', "text1") == TokenAction::ContinueToken);
+        assert!(get_default_token_action('_', "text2_") == TokenAction::ContinueToken);
+        assert!(get_default_token_action('_', "$") == TokenAction::StartNewToken);
     }
 }
