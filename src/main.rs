@@ -1,9 +1,6 @@
-#![allow(dead_code)]
-#![allow(unused)]
-
 use dm_parser::DmParser;
 use dotenv::dotenv;
-use log::{info, logger, set_logger};
+use log::info;
 
 pub mod dm_parser;
 pub mod dm_preprocessor;
@@ -17,6 +14,6 @@ pub fn main() -> Result<(), String> {
     info!("LiES -- Init");
 
     let mut parser = DmParser::new("D:/ss13/tgstation");
-    // parser.load("tgstation.dme")
-    parser.load(r"code\_globalvars\_regexes.dm")
+    parser.load("tgstation.dme")
+    // parser.load(r"code\_globalvars\_regexes.dm")
 }
