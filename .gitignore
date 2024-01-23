@@ -1,2 +1,5 @@
 /target
 .env
+# default log
+lies.log
+lies.log.old

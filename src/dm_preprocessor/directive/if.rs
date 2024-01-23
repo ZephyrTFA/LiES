@@ -35,7 +35,7 @@ impl DmPreProcessor {
             let left_paren = args.get(index + 1).map(|x| x == "(").unwrap_or(false);
             let right_paren = args.get(index + 3).map(|x| x == ")").unwrap_or(false);
             if !left_paren || !right_paren {
-                error!("Malformed defined() macro");
+                error!("Malformed defined() macro. {args:#?}");
                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
             }
             let name = args.remove(index + 2);
@@ -226,7 +226,7 @@ impl DmPreProcessor {
             }
 
             if args.len() > 1 {
-                error!("Malformed if statement");
+                error!("Malformed if statement: {:#?}", args);
                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
             }
             if let Ok(result) = args[0].parse::<i32>() {

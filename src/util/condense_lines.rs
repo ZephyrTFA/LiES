@@ -1,5 +1,5 @@
 // Condenses all lines that end with a backslash into a single line.
-pub fn condense_lines(lines: &[String]) -> Vec<String> {
+pub fn condense_lines(lines: &[impl Into<String> + Clone]) -> Vec<String> {
     if lines.is_empty() {
         return vec![];
     }
@@ -8,10 +8,11 @@ pub fn condense_lines(lines: &[String]) -> Vec<String> {
     let mut current_line = String::new();
 
     for line in lines {
+        let line = line.clone().into();
         if line.ends_with('\\') {
             current_line.push_str(&line[..line.len() - 1]);
         } else {
-            current_line.push_str(line);
+            current_line.push_str(&line);
             condensed.push(std::mem::take(&mut current_line));
         }
     }

@@ -21,7 +21,7 @@ impl DmPreProcessor {
         directive: &str,
         args: Vec<DmToken>,
     ) -> Result<(), ParseError> {
-        let mut effective_args = vec![];
+        let mut effective_args: Vec<DmToken> = vec![];
         for arg in args {
             if arg.value().contains("//") {
                 break;
@@ -92,7 +92,7 @@ impl DmPreProcessor {
                     "Unknown directive `{}` with args `{:#?}`",
                     directive, effective_args
                 );
-                exit(ERROR_CODE_UNKNOWN_DIRECTIVE);
+                panic!();
             }
         }
     }

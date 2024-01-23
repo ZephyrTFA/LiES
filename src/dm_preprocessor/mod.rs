@@ -1,6 +1,6 @@
 use std::{collections::HashMap, mem::replace, path::PathBuf};
 
-use self::define_definition::DmDefineDefinition;
+use self::{define_definition::DmDefineDefinition, token_handling::TokenizeState};
 
 pub mod define_definition;
 pub mod directive;
@@ -8,7 +8,7 @@ pub mod preprocess_core;
 mod stddef_defines;
 pub mod token_handling;
 
-#[cfg(test)]
+// #[cfg(test)]
 mod tests;
 
 /**
@@ -21,6 +21,7 @@ pub struct DmPreProcessor {
     tokenize_in_string: bool,
     tokenize_in_quote: bool,
     pending_includes: Vec<PathBuf>,
+    tokenize_state: TokenizeState,
 }
 
 impl Default for DmPreProcessor {
@@ -37,6 +38,7 @@ impl DmPreProcessor {
             tokenize_in_string: false,
             tokenize_in_quote: false,
             pending_includes: vec![],
+            tokenize_state: TokenizeState::default(),
         }
     }
 

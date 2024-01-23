@@ -5,9 +5,11 @@ use std::{
 
 pub mod condense_lines;
 pub mod define_definition;
+pub mod determine_token_action;
 pub mod dm_file;
 pub mod exit_codes;
 pub mod log;
+pub mod start_new_token;
 pub mod whitespace_char;
 
 #[derive(Debug)]
@@ -27,4 +29,16 @@ impl Display for ParseError {
         };
         write!(f, "{}", fail_reason)
     }
+}
+
+pub fn count_backslashes(string: &str) -> usize {
+    let mut count = 0;
+    for char in string.chars().rev() {
+        if char == '\\' {
+            count += 1;
+        } else {
+            break;
+        }
+    }
+    count
 }

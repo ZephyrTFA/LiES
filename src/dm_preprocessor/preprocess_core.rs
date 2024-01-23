@@ -69,7 +69,7 @@ impl DmPreProcessor {
                     Ok(()) => {}
                     Err(code) => {
                         error!("PreProcessor error: {}", code);
-                        exit(ERROR_CODE_PATTERN_NOT_FOUND);
+                        panic!();
                     }
                 }
                 continue;
@@ -95,7 +95,7 @@ impl DmPreProcessor {
             Some(tokens) => tokens,
             None => {
                 error!("Failed to find pattern `{}`", pattern);
-                exit(ERROR_CODE_PATTERN_NOT_FOUND);
+                panic!();
             }
         }
     }
@@ -105,7 +105,7 @@ impl DmPreProcessor {
             Some(tokens) => tokens,
             None => {
                 error!("Failed to find pattern `{}`", patterns.join("`, `"));
-                exit(ERROR_CODE_PATTERN_NOT_FOUND);
+                panic!();
             }
         }
     }
