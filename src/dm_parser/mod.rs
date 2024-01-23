@@ -1,14 +1,13 @@
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
-    process::exit,
 };
 
 use log::{debug, error, info, trace, warn};
 
 use crate::{
     dm_preprocessor::DmPreProcessor,
-    util::{dm_file::DmFile, exit_codes::ERROR_CODE_DIRECTORY_TRAVERSAL_FAILED},
+    util::{dm_file::DmFile},
 };
 
 pub struct DmParser {
@@ -95,7 +94,7 @@ impl DmParser {
         let file = DmFile::new(&self.environment_directory, file.into())?;
         let tokens = self.preprocessor.preprocess(&file);
         warn!("parsing not yet implemented.");
-        for token in tokens {}
+        for _token in tokens {}
         Ok(())
     }
 }

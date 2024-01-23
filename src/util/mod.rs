@@ -1,6 +1,5 @@
 use std::{
     fmt::{Display, Formatter},
-    path::PathBuf,
 };
 
 pub mod condense_lines;

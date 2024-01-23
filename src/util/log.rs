@@ -9,7 +9,7 @@ use std::{
 
 use log::{Level, LevelFilter, Log};
 use once_cell::sync::Lazy;
-use regex::Replacer;
+
 
 #[derive(Default)]
 struct InternalLogger {
@@ -59,7 +59,7 @@ pub fn init() {
     } else {
         for arg in args() {
             match arg.as_str() {
-                ("--verbose" | "--debug") if highest_log_level < LevelFilter::Debug => {
+                "--verbose" | "--debug" if highest_log_level < LevelFilter::Debug => {
                     highest_log_level = log::LevelFilter::Debug
                 }
                 "--trace" if highest_log_level < LevelFilter::Trace => {
@@ -131,7 +131,7 @@ impl InternalLogger {
 }
 
 impl Log for InternalLogger {
-    fn enabled(&self, metadata: &log::Metadata) -> bool {
+    fn enabled(&self, _metadata: &log::Metadata) -> bool {
         true
     }
 

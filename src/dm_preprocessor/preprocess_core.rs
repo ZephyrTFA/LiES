@@ -1,6 +1,6 @@
 use std::process::exit;
 
-use log::{debug, error};
+use log::{error};
 use once_cell::sync::Lazy;
 use regex::Regex;
 

@@ -1,12 +1,9 @@
-use std::vec;
 
-use ::log::trace;
-use dotenv::dotenv;
 
-use crate::{
-    dm_preprocessor::{token_handling::DmToken, DmPreProcessor},
-    util::log,
-};
+
+
+
+
 
 #[test]
 fn test_tokenize_empty() {
@@ -419,7 +416,7 @@ fn test_tokenize_preprocess_unmatched_quotes() {
 fn test_hard_lines() {
     let mut preprocesser = DmPreProcessor::new();
 
-    let mut lines = vec![
+    let lines = vec![
         "\t\t\t\tparts += \"[FOURSPACES]First Death: <b>[ded[\"name\"]], [ded[\"role\"]], at [ded[\"area\"]]. Damage taken: [ded[\"damage\"]].[ded[\"last_words\"] ? \" Their last words were: \\\"[ded[\"last_words\"]]\\\"\" : \"\"]</b>\""
     ];
 

@@ -1,6 +1,6 @@
-use std::{fmt::Display, process::exit};
+use std::{fmt::Display};
 
-use log::error;
+
 
 use crate::dm_preprocessor::token_handling::TokenizeState;
 
@@ -42,7 +42,7 @@ pub fn determine_token_action(
     current_token: &str,
 ) -> TokenAction {
     if let Some(quote_char) = state.in_quote() {
-        if (char == *quote_char && count_backslashes(current_token) % 2 == 0) {
+        if char == *quote_char && count_backslashes(current_token) % 2 == 0 {
             state.set_in_quote(None);
             return TokenAction::StartNewToken;
         } else {
