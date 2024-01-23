@@ -1,8 +1,6 @@
-use std::{fmt::Display};
+use std::fmt::Display;
 
 use log::{error, trace};
-
-
 
 use crate::util::{
     condense_lines::condense_lines,

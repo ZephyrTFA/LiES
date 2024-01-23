@@ -1,6 +1,4 @@
-use std::{
-    fmt::{Display, Formatter},
-};
+use std::fmt::{Display, Formatter};
 
 pub mod condense_lines;
 pub mod define_definition;

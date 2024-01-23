@@ -1,7 +1,5 @@
 use std::path::{Path, PathBuf};
 
-
-
 pub struct DmFile {
     path: PathBuf,
     lines: Vec<String>,

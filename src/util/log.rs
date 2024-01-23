@@ -10,7 +10,6 @@ use std::{
 use log::{Level, LevelFilter, Log};
 use once_cell::sync::Lazy;
 
-
 #[derive(Default)]
 struct InternalLogger {
     log_stdout: Option<fs::File>,

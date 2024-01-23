@@ -1,10 +1,8 @@
-
-
 use log::{error, trace};
 
 use crate::{
     dm_preprocessor::{token_handling::DmToken, DmPreProcessor},
-    util::{ParseError},
+    util::ParseError,
 };
 
 impl DmPreProcessor {

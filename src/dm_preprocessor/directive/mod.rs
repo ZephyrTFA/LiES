@@ -1,8 +1,6 @@
-
-
 use log::{error, warn};
 
-use crate::util::{ParseError};
+use crate::util::ParseError;
 
 use super::{token_handling::DmToken, DmPreProcessor};
 

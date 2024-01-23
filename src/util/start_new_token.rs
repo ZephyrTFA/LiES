@@ -1,7 +1,3 @@
-
-
-
-
 use super::determine_token_action::TokenAction;
 
 const SYM_MATH: &[char; 8] = &['+', '-', '*', '/', '%', '^', '&', '|'];

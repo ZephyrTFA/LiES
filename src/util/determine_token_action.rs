@@ -1,6 +1,4 @@
-use std::{fmt::Display};
-
-
+use std::fmt::Display;
 
 use crate::dm_preprocessor::token_handling::TokenizeState;
 
