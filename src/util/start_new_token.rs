@@ -10,12 +10,13 @@ const SYM_OTHR: &[char; 6] = &['!', '=', '.', '#', '<', '>'];
 
 // Determines if a new token should be started based on the current character and the current token.
 pub fn get_default_token_action(char: char, current_token: &str) -> TokenAction {
-    if current_token.is_empty() {
-        return TokenAction::ContinueToken;
+    // special case for quotes, they should always be isolated
+    if SYM_QUTE.contains(&char) {
+        return TokenAction::IsolateToken;
     }
 
-    if current_token.ends_with('\\') {
-        return TokenAction::EndToken;
+    if current_token.is_empty() {
+        return TokenAction::ContinueToken;
     }
 
     if char.is_whitespace() {
@@ -35,8 +36,16 @@ pub fn get_default_token_action(char: char, current_token: &str) -> TokenAction 
         };
     }
 
-    if SYM_MATH.contains(&char) || SYM_QUTE.contains(&char) || SYM_OTHR.contains(&char) {
-        return if current_token.ends_with(char) {
+    if SYM_MATH.contains(&char) {
+        return if current_token.ends_with(SYM_MATH) {
+            TokenAction::ContinueToken
+        } else {
+            TokenAction::StartNewToken
+        };
+    }
+
+    if SYM_OTHR.contains(&char) {
+        return if current_token.ends_with(SYM_OTHR) {
             TokenAction::ContinueToken
         } else {
             TokenAction::StartNewToken
@@ -72,7 +81,6 @@ mod tests {
     fn test_special_symbols() {
         let mut symbols = vec![];
         symbols.extend(SYM_MATH);
-        symbols.extend(SYM_QUTE);
         symbols.extend(SYM_OTHR);
 
         for symbol in symbols {
@@ -80,6 +88,17 @@ mod tests {
             assert!(
                 get_default_token_action(symbol, symbol.to_string().as_str())
                     == TokenAction::ContinueToken
+            );
+        }
+    }
+
+    #[test]
+    fn test_quote_symbols() {
+        for symbol in SYM_QUTE {
+            assert!(get_default_token_action(*symbol, "text") == TokenAction::IsolateToken);
+            assert!(
+                get_default_token_action(*symbol, symbol.to_string().as_str())
+                    == TokenAction::IsolateToken
             );
         }
     }

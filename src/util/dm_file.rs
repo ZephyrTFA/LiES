@@ -21,7 +21,7 @@ impl DmFile {
         Ok(lines)
     }
 
-    pub fn lines(&self) -> &Vec<String> {
+    pub fn lines(&self) -> &[String] {
         &self.lines
     }
 

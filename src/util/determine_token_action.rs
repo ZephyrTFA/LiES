@@ -45,21 +45,35 @@ pub fn determine_token_action(
             state.set_in_quote(None);
             return TokenAction::StartNewToken;
         } else {
-            return TokenAction::ContinueToken;
+            return match char {
+                '[' if state.in_quote() == Some(&'"') => {
+                    state.increment_string_interop_count();
+                    state.set_in_quote(None);
+                    TokenAction::IsolateToken
+                }
+                _ => TokenAction::ContinueToken,
+            };
         }
     }
 
     match char {
+        ']' if state.in_string_interop() => {
+            state.decrement_string_interop_count();
+            state.set_in_quote(Some('"'));
+            TokenAction::IsolateToken
+        }
         '"' | '\'' => {
             if state.in_comment_any() || state.in_preprocessor() {
-                return TokenAction::IsolateToken;
+                return if char == '"' {
+                    if state.in_preprocessor() {
+                        state.set_in_quote(Some(char));
+                    }
+                    TokenAction::IsolateToken
+                } else {
+                    TokenAction::StartNewToken
+                };
             }
-            if !current_token.is_empty() {
-                panic!(
-                    "This should not occur: '{char}' \"{current_token}\" {:#?}",
-                    state.line_tokens()
-                )
-            }
+
             state.set_in_quote(Some(char));
             TokenAction::IsolateToken
         }

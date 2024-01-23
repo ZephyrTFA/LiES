@@ -1,3 +1,5 @@
+use std::vec;
+
 use crate::{
     dm_preprocessor::{token_handling::DmToken, DmPreProcessor},
     util::log,
@@ -7,7 +9,7 @@ use crate::{
 fn test_tokenize_empty() {
     let mut preprocessor = DmPreProcessor::new();
 
-    let lines = vec![];
+    let lines: Vec<&str> = vec![];
     let expected = vec![];
     let result = preprocessor.tokenize(&lines);
 
@@ -18,7 +20,7 @@ fn test_tokenize_empty() {
 fn test_tokenize_single_line() {
     let mut preprocessor = DmPreProcessor::new();
 
-    let lines: Vec<String> = vec!["This is a test.".into()];
+    let lines = vec!["This is a test."];
 
     let expected = vec![
         DmToken::from("This"),
@@ -41,7 +43,7 @@ fn test_tokenize_single_line() {
 fn test_tokenize_multiple_lines() {
     let mut preprocessor = DmPreProcessor::new();
 
-    let lines: Vec<String> = vec!["This is a test.".into(), "Another test.".into()];
+    let lines = vec!["This is a test.", "Another test."];
 
     let expected = vec![
         DmToken::from("This"),
@@ -69,7 +71,7 @@ fn test_tokenize_multiple_lines() {
 fn test_tokenize_empty_lines() {
     let mut preprocessor = DmPreProcessor::new();
 
-    let lines: Vec<String> = vec!["This is a test.".into(), "".into()];
+    let lines = vec!["This is a test.", ""];
 
     let expected: Vec<DmToken> = vec![
         DmToken::from("This"),
@@ -90,10 +92,89 @@ fn test_tokenize_empty_lines() {
 }
 
 #[test]
+fn test_string_interop() {
+    let mut preprocessor = DmPreProcessor::new();
+
+    let lines = vec![
+        "\"String with zero interop\"",
+        "\"String with [\"one\"] interop\"",
+        "\"String [\"with\"] [\"two\"] separate interops\"",
+    ];
+
+    let expected = vec![
+        DmToken::from("\""),
+        DmToken::from("String with zero interop"),
+        DmToken::from("\""),
+        DmToken::from("\n"),
+        DmToken::from("\""),
+        DmToken::from("String with "),
+        DmToken::from("["),
+        DmToken::from("\""),
+        DmToken::from("one"),
+        DmToken::from("\""),
+        DmToken::from("]"),
+        DmToken::from(" interop"),
+        DmToken::from("\""),
+        DmToken::from("\n"),
+        DmToken::from("\""),
+        DmToken::from("String "),
+        DmToken::from("["),
+        DmToken::from("\""),
+        DmToken::from("with"),
+        DmToken::from("\""),
+        DmToken::from("]"),
+        DmToken::from(" "),
+        DmToken::from("["),
+        DmToken::from("\""),
+        DmToken::from("two"),
+        DmToken::from("\""),
+        DmToken::from("]"),
+        DmToken::from(" separate interops"),
+        DmToken::from("\""),
+        DmToken::from("\n"),
+    ];
+
+    let result = preprocessor.tokenize(&lines);
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_string_interop_nested() {
+    let mut preprocessor = DmPreProcessor::new();
+    let lines = vec!["\"String with [\"a [\"triple [\"nested\"]\"]\"] interop\""];
+
+    let expected = vec![
+        DmToken::from("\""),
+        DmToken::from("String with "),
+        DmToken::from("["),
+        DmToken::from("\""),
+        DmToken::from("a "),
+        DmToken::from("["),
+        DmToken::from("\""),
+        DmToken::from("triple "),
+        DmToken::from("["),
+        DmToken::from("\""),
+        DmToken::from("nested"),
+        DmToken::from("\""),
+        DmToken::from("]"),
+        DmToken::from("\""),
+        DmToken::from("]"),
+        DmToken::from("\""),
+        DmToken::from("]"),
+        DmToken::from(" interop"),
+        DmToken::from("\""),
+        DmToken::from("\n"),
+    ];
+
+    let result = preprocessor.tokenize(&lines);
+    assert_eq!(result, expected);
+}
+
+#[test]
 fn test_condense_lines() {
     let mut preprocessor = DmPreProcessor::new();
 
-    let lines: Vec<String> = vec!["This is a test. \\".into(), "Another test.".into()];
+    let lines = vec!["This is a test. \\", "Another test."];
 
     let expected = vec![
         DmToken::from("This"),
@@ -118,13 +199,25 @@ fn test_condense_lines() {
 }
 
 #[test]
+fn test_quote_interior() {
+    let mut preprocesser = DmPreProcessor::new();
+    let lines = vec!["\"THIS IS A QUOTE\""];
+
+    let expected = vec![
+        DmToken::from("\""),
+        DmToken::from("THIS IS A QUOTE"),
+        DmToken::from("\""),
+        DmToken::from("\n"),
+    ];
+
+    let result = preprocesser.tokenize(&lines);
+    assert_eq!(result, expected);
+}
+
+#[test]
 fn test_tokenize_comment() {
     let mut preprocessor = DmPreProcessor::new();
-    let lines = vec![
-        "This is a test.".into(),
-        "// This is a comment.".into(),
-        "Another test.".into(),
-    ];
+    let lines = vec!["This is a test.", "// This is a comment.", "Another test."];
 
     let expected = vec![
         DmToken::from("This"),
@@ -162,11 +255,11 @@ fn test_tokenize_comment() {
 fn test_tokenize_comment_multiline() {
     let mut preprocessor = DmPreProcessor::new();
     let lines = vec![
-        "This is a test.".into(),
-        "/*".into(),
-        "This is a comment.".into(),
-        "*/".into(),
-        "Another test.".into(),
+        "This is a test.",
+        "/*",
+        "This is a comment.",
+        "*/",
+        "Another test.",
     ];
 
     let expected = vec![
@@ -205,20 +298,17 @@ fn test_tokenize_comment_multiline() {
 
 #[test]
 fn test_tokenize_comment_multline_commented_bad_end() {
-    dotenv::dotenv().ok();
-    log::init();
-
     let mut preprocesser = DmPreProcessor::new();
 
     let lines = vec![
-        "/*".into(),
-        " *".into(),
-        " * This is a comment.".into(),
-        " *".into(),
-        " // /*/".into(), // this doen't end the comment because the ending is broken
-        "A lone single-quote '".into(), // unmatched quotes will fail except in comments
-        "A lone double-quote \"".into(), // these won't fail because the commend doesn't end in one of the previous line
-        "*/".into(),
+        "/*",
+        " *",
+        " * This is a comment.",
+        " *",
+        " // /*/",               // this doen't end the comment because the ending is broken
+        "A lone single-quote '", // unmatched quotes will fail except in comments
+        "A lone double-quote \"", // these won't fail because the commend doesn't end in one of the previous line
+        "*/",
     ];
 
     let expected = vec![
@@ -281,9 +371,9 @@ fn test_tokenize_preprocess_unmatched_quotes() {
     let mut preprocesser = DmPreProcessor::new();
 
     let lines = vec![
-        "This is a test.".into(),
-        "#warn This shouldn't fail.".into(),
-        "#error Nor \"this".into(),
+        "This is a test.",
+        "#warn This shouldn't fail.",
+        "#error Nor \"this",
     ];
 
     let expected = vec![

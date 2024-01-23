@@ -1,4 +1,4 @@
-use std::{borrow::BorrowMut, fmt::Display, process::exit};
+use std::{borrow::BorrowMut, fmt::Display, process::exit, thread::sleep, time::Duration};
 
 use log::{debug, error, trace};
 use once_cell::sync::Lazy;
@@ -57,9 +57,30 @@ pub struct TokenizeState {
     comment_multi: usize,
     in_preprocessor: bool,
     line_tokens: Vec<DmToken>,
+    string_interop_count: usize,
 }
 
 impl TokenizeState {
+    pub fn increment_string_interop_count(&mut self) {
+        self.string_interop_count += 1;
+        trace!(
+            "Incrementing string interop count to {}",
+            self.string_interop_count
+        );
+    }
+
+    pub fn decrement_string_interop_count(&mut self) {
+        self.string_interop_count -= 1;
+        trace!(
+            "Decrementing string interop count to {}",
+            self.string_interop_count
+        );
+    }
+
+    pub fn in_string_interop(&self) -> bool {
+        self.string_interop_count > 0
+    }
+
     pub fn in_comment_single(&self) -> bool {
         self.comment_single
     }
@@ -85,10 +106,18 @@ impl TokenizeState {
     }
 
     pub fn set_in_quote(&mut self, quote: Option<char>) {
+        if quote.is_some() != self.in_quote.is_some() {
+            trace!("Setting quote to {:?}", quote);
+        }
         self.in_quote = quote;
     }
 
     pub fn set_in_preprocessor(&mut self, in_preprocessor: bool) {
+        if in_preprocessor != self.in_preprocessor {
+            trace!("Setting in preprocessor to true");
+        } else {
+            trace!("Setting in preprocessor to false");
+        }
         self.in_preprocessor = in_preprocessor;
     }
 
@@ -105,15 +134,22 @@ impl TokenizeState {
     }
 
     pub fn set_comment_single(&mut self, comment_single: bool) {
+        if comment_single != self.comment_single {
+            trace!("Setting comment single to true");
+        } else {
+            trace!("Setting comment single to false");
+        }
         self.comment_single = comment_single;
     }
 
     pub fn increment_comment_multi(&mut self) {
         self.comment_multi += 1;
+        trace!("Incrementing comment multi to {}", self.comment_multi);
     }
 
     pub fn decrement_comment_multi(&mut self) {
         self.comment_multi -= 1;
+        trace!("Decrementing comment multi to {}", self.comment_multi);
     }
 
     pub fn is_last_token_an_escape(&self) -> bool {
@@ -140,7 +176,7 @@ impl TokenizeState {
 }
 
 impl DmPreProcessor {
-    pub fn tokenize(&mut self, lines: &[String]) -> Vec<DmToken> {
+    pub fn tokenize(&mut self, lines: &[impl Into<String> + Clone]) -> Vec<DmToken> {
         let condensed_lines: Vec<String> = condense_lines(lines);
         let mut tokens: Vec<DmToken> = vec![];
 
@@ -149,7 +185,9 @@ impl DmPreProcessor {
             self.tokenize_state.set_in_preprocessor(false);
             self.tokenize_state.set_comment_single(false);
 
+            trace!("Tokenizing line: `{}`", line);
             for char in line.chars() {
+                trace!("Char: `{}`", char);
                 let next_action = determine_token_action(&mut self.tokenize_state, char, &token);
                 match next_action {
                     TokenAction::StartNewToken => {
@@ -188,6 +226,14 @@ impl DmPreProcessor {
             }
             self.tokenize_state.add_line_token("\n");
             tokens.append(&mut self.tokenize_state.finalize_line_tokens());
+            if self.tokenize_state.in_quote().is_some() && !self.tokenize_state.in_preprocessor() {
+                error!(
+                    "Unterminated quote `{}` in line `{}`",
+                    self.tokenize_state.in_quote().unwrap(),
+                    line
+                );
+                panic!();
+            }
         }
 
         tokens

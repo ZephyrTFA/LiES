@@ -225,7 +225,7 @@ impl DmPreProcessor {
             }
 
             if args.len() > 1 {
-                error!("Malformed if statement");
+                error!("Malformed if statement: {:#?}", args);
                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
             }
             if let Ok(result) = args[0].parse::<i32>() {
