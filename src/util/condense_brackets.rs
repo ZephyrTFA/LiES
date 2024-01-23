@@ -1,9 +1,6 @@
 use std::panic;
 
-use ::log::{error, info, trace};
-use dotenv::dotenv;
-
-use crate::util::log;
+use ::log::{error, trace};
 
 /// Iterates through a slice of string like objects and condenses curly braces into a single line.
 /// Must be done after condense_lines.
@@ -53,7 +50,7 @@ fn test_walk_ending_brace_no_brace() {
     let mut input = vec!["Line with no braces in it".into()];
     panic::set_hook(Box::new(|_| {}));
     panic::catch_unwind(move || walk_to_next_ending_brace(&mut input)).unwrap_err();
-    panic::take_hook();
+    _ = panic::take_hook();
 }
 
 #[test]
