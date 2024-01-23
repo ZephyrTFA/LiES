@@ -3,6 +3,7 @@ use std::{
     path::PathBuf,
 };
 
+pub mod condense_brackets;
 pub mod condense_lines;
 pub mod define_definition;
 pub mod determine_token_action;
