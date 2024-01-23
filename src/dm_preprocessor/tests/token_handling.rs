@@ -1,4 +1,7 @@
-use crate::dm_preprocessor::{token_handling::DmToken, DmPreProcessor};
+use crate::{
+    dm_preprocessor::{token_handling::DmToken, DmPreProcessor},
+    util::log,
+};
 
 #[test]
 fn test_tokenize_empty() {
@@ -200,7 +203,11 @@ fn test_tokenize_comment_multiline() {
     assert_eq!(result, expected);
 }
 
+#[test]
 fn test_tokenize_comment_multline_commented_bad_end() {
+    dotenv::dotenv().ok();
+    log::init();
+
     let mut preprocesser = DmPreProcessor::new();
 
     let lines = vec![
@@ -211,6 +218,7 @@ fn test_tokenize_comment_multline_commented_bad_end() {
         " // /*/".into(), // this doen't end the comment because the ending is broken
         "A lone single-quote '".into(), // unmatched quotes will fail except in comments
         "A lone double-quote \"".into(), // these won't fail because the commend doesn't end in one of the previous line
+        "*/".into(),
     ];
 
     let expected = vec![
@@ -237,7 +245,8 @@ fn test_tokenize_comment_multline_commented_bad_end() {
         DmToken::from(" "),
         DmToken::from("//"),
         DmToken::from(" "),
-        DmToken::from("/*/"),
+        DmToken::from("/*"),
+        DmToken::from("/"),
         DmToken::from("\n"),
         DmToken::from("A"),
         DmToken::from(" "),
@@ -258,6 +267,8 @@ fn test_tokenize_comment_multline_commented_bad_end() {
         DmToken::from("quote"),
         DmToken::from(" "),
         DmToken::from("\""),
+        DmToken::from("\n"),
+        DmToken::from("*/"),
         DmToken::from("\n"),
     ];
 

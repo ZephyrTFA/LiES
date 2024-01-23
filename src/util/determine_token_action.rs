@@ -1,9 +1,11 @@
 use std::{fmt::Display, process::exit};
 
+use log::error;
+
 use crate::dm_preprocessor::token_handling::TokenizeState;
 
 use super::{
-    start_new_token::should_start_new_token, whitespace_char::is_first_non_whitespace_char,
+    start_new_token::get_default_token_action, whitespace_char::is_first_non_whitespace_char,
 };
 
 #[derive(Debug, PartialEq)]
@@ -12,6 +14,10 @@ pub enum TokenAction {
     StartNewToken,
     /// Add the character to the current token.
     ContinueToken,
+    /// Add the character to the current token and end the token.
+    EndToken,
+    /// Isolate the current character into its own token.
+    IsolateToken,
     /// Ignore the current character.
     None,
 }
@@ -21,6 +27,8 @@ impl Display for TokenAction {
         match self {
             TokenAction::StartNewToken => write!(f, "StartNewToken"),
             TokenAction::ContinueToken => write!(f, "ContinueToken"),
+            TokenAction::EndToken => write!(f, "EndToken"),
+            TokenAction::IsolateToken => write!(f, "IsolateToken"),
             TokenAction::None => write!(f, "None"),
         }
     }
@@ -43,39 +51,76 @@ pub fn determine_token_action(
 
     match char {
         '"' | '\'' => {
+            if state.in_comment_any() || state.in_preprocessor() {
+                return TokenAction::IsolateToken;
+            }
             if !current_token.is_empty() {
-                panic!("This should not occur")
+                panic!(
+                    "This should not occur: '{char}' \"{current_token}\" {:#?}",
+                    state.line_tokens()
+                )
             }
             state.set_in_quote(Some(char));
-            TokenAction::StartNewToken
+            TokenAction::IsolateToken
         }
         '#' => {
             if is_first_non_whitespace_char(state.line_tokens()) {
                 state.set_in_preprocessor(true);
+                return TokenAction::EndToken;
             }
 
-            if should_start_new_token(char, current_token) {
-                TokenAction::StartNewToken
-            } else {
-                TokenAction::ContinueToken
+            get_default_token_action(char, current_token)
+        }
+        '*' => {
+            if state.in_comment_single() {
+                return get_default_token_action(char, current_token);
+            }
+
+            if state.in_comment_multi() {
+                return match current_token.chars().next_back() {
+                    Some('/') => {
+                        state.increment_comment_multi();
+                        TokenAction::EndToken
+                    }
+                    _ => get_default_token_action(char, current_token),
+                };
+            }
+
+            if state.is_last_token_an_escape() {
+                return get_default_token_action(char, current_token);
+            }
+
+            match current_token.chars().next_back() {
+                Some('/') => {
+                    state.increment_comment_multi();
+                    TokenAction::EndToken
+                }
+                _ => get_default_token_action(char, current_token),
             }
         }
-        '.' => TokenAction::StartNewToken,
-        ' ' | '\t' => {
-            if current_token.ends_with(char) {
-                TokenAction::ContinueToken
-            } else if !current_token.is_empty() {
-                TokenAction::StartNewToken
-            } else {
-                TokenAction::None
+        '/' => {
+            if state.in_comment_multi() {
+                return match current_token.chars().next_back() {
+                    Some('*') => {
+                        state.decrement_comment_multi();
+                        TokenAction::EndToken
+                    }
+                    _ => get_default_token_action(char, current_token),
+                };
+            }
+
+            if state.is_last_token_an_escape() {
+                return get_default_token_action(char, current_token);
+            }
+
+            match current_token.chars().next_back() {
+                Some('/') => {
+                    state.set_comment_single(true);
+                    TokenAction::EndToken
+                }
+                _ => get_default_token_action(char, current_token),
             }
         }
-        _ => {
-            if should_start_new_token(char, current_token) {
-                TokenAction::StartNewToken
-            } else {
-                TokenAction::ContinueToken
-            }
-        }
+        _ => get_default_token_action(char, current_token),
     }
 }

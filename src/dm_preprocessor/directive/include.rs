@@ -11,12 +11,12 @@ impl DmPreProcessor {
     pub(super) fn handle_include(&mut self, args: &[DmToken]) -> Result<(), ParseError> {
         if args.len() != 3 {
             error!("Invalid argument format for `include`");
-            exit(ERROR_CODE_INVALID_INCLUDE_FORMAT);
+            panic!();
         }
 
         if args[0].value() != "\"" || args[2].value() != "\"" {
             error!("Invalid argument format for `include`");
-            exit(ERROR_CODE_INVALID_INCLUDE_FORMAT);
+            panic!();
         }
         trace!("include: `{}`", args[1].value());
         self.pending_includes.push(args[1].value().into());

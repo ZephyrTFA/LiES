@@ -59,7 +59,7 @@ impl DmPreProcessor {
             "warn" => self.handle_warn(&args),
             _ => {
                 error!("Unknown directive `{}` with args `{:#?}`", directive, args);
-                exit(ERROR_CODE_UNKNOWN_DIRECTIVE);
+                panic!();
             }
         }
     }

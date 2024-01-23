@@ -70,7 +70,7 @@ impl DmParser {
                 "Failed to determine logical parent of `{}`",
                 actual_path.display()
             );
-            exit(ERROR_CODE_DIRECTORY_TRAVERSAL_FAILED);
+            panic!();
         }
 
         let result = self.parse_file(&actual_path);

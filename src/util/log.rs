@@ -23,7 +23,7 @@ pub fn init() {
                 4 => LevelFilter::Trace,
                 _ => {
                     eprintln!("Invalid value for LIES_LOG_LEVEL");
-                    exit(1);
+                    panic!();
                 }
             }
         } else {
@@ -35,7 +35,7 @@ pub fn init() {
                 "trace" => highest_log_level = LevelFilter::Trace,
                 _ => {
                     eprintln!("Invalid value for LIES_LOG_LEVEL");
-                    exit(1);
+                    panic!();
                 }
             }
         }
