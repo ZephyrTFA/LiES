@@ -22,14 +22,6 @@ impl Display for DmToken {
     }
 }
 
-impl From<&str> for DmToken {
-    fn from(value: &str) -> Self {
-        Self {
-            value: value.to_string(),
-        }
-    }
-}
-
 impl DmToken {
     pub fn new(value: String) -> Self {
         Self { value }

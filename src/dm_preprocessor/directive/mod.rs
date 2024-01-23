@@ -21,7 +21,7 @@ impl DmPreProcessor {
         directive: &str,
         args: Vec<DmToken>,
     ) -> Result<(), ParseError> {
-        let mut effective_args = vec![];
+        let mut effective_args: Vec<DmToken> = vec![];
         for arg in args {
             if arg.value().contains("//") {
                 break;
@@ -88,7 +88,10 @@ impl DmPreProcessor {
             "undef" => self.handle_undef(&effective_args),
             "warn" => self.handle_warn(&effective_args),
             _ => {
-                error!("Unknown directive `{}` with args `{:#?}`", directive, args);
+                error!(
+                    "Unknown directive `{}` with args `{:#?}`",
+                    directive, effective_args
+                );
                 panic!();
             }
         }
