@@ -239,6 +239,5 @@ impl DmPreProcessor {
                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
             }
         }
-        unreachable!()
     }
 }

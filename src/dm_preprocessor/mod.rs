@@ -18,8 +18,6 @@ mod tests;
 pub struct DmPreProcessor {
     defines: HashMap<String, DmDefineDefinition>,
     logical_skip_levels: usize, // if this somehow gets too big, find the nearest bar
-    tokenize_in_string: bool,
-    tokenize_in_quote: bool,
     pending_includes: Vec<PathBuf>,
     tokenize_state: TokenizeState,
 }
@@ -35,8 +33,6 @@ impl DmPreProcessor {
         Self {
             defines: Self::initial_defines(),
             logical_skip_levels: 0,
-            tokenize_in_string: false,
-            tokenize_in_quote: false,
             pending_includes: vec![],
             tokenize_state: TokenizeState::default(),
         }

@@ -5,15 +5,12 @@ use std::{
 
 use log::{debug, error, info, trace, warn};
 
-use crate::{
-    dm_preprocessor::DmPreProcessor,
-    util::{dm_file::DmFile},
-};
+use crate::{dm_preprocessor::DmPreProcessor, util::dm_file::DmFile};
 
 pub struct DmParser {
     preprocessor: DmPreProcessor,
     /// The order in which files were included. Uses a relative path from the environment directory.
-    include_order: Vec<PathBuf>,
+    _include_order: Vec<PathBuf>,
     environment_directory: PathBuf,
     environment_traversal: Vec<PathBuf>,
 }
@@ -27,7 +24,7 @@ impl DmParser {
         );
         Self {
             preprocessor: DmPreProcessor::new(),
-            include_order: vec![],
+            _include_order: vec![],
             environment_directory,
             environment_traversal: vec![],
         }
