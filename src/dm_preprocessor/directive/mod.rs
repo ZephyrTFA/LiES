@@ -1,8 +1,6 @@
-use std::process::exit;
-
 use log::{error, warn};
 
-use crate::util::{exit_codes::ERROR_CODE_UNKNOWN_DIRECTIVE, ParseError};
+use crate::util::ParseError;
 
 use super::{token_handling::DmToken, DmPreProcessor};
 

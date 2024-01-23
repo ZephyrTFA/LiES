@@ -1,10 +1,8 @@
-use std::process::exit;
-
-use log::{debug, error, trace};
+use log::{error, trace};
 
 use crate::{
     dm_preprocessor::{token_handling::DmToken, DmPreProcessor},
-    util::{exit_codes::ERROR_CODE_INVALID_INCLUDE_FORMAT, ParseError},
+    util::ParseError,
 };
 
 impl DmPreProcessor {

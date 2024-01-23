@@ -1,7 +1,4 @@
-use std::{
-    fmt::{Display, Formatter},
-    path::PathBuf,
-};
+use std::fmt::{Display, Formatter};
 
 pub mod condense_brackets;
 pub mod condense_lines;
