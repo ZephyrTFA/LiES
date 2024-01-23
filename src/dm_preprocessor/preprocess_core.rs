@@ -27,7 +27,6 @@ impl DmPreProcessor {
             if let Some(until_token) = &skip_until_regex {
                 if until_token.is_match(token) {
                     skip_until_regex = None;
-                    debug!("found token match");
                 }
                 continue;
             }
@@ -115,8 +114,11 @@ impl DmPreProcessor {
         match Self::take_until(tokens, |token| pattern.is_match(token.value())) {
             Some(tokens) => tokens,
             None => {
-                error!("Failed to find regex pattern `{}`", pattern);
-                panic!();
+                error!(
+                    "Failed to find regex pattern `{}` with remaining: `{:#?}`",
+                    pattern, tokens
+                );
+                exit(ERROR_CODE_PATTERN_NOT_FOUND);
             }
         }
     }
