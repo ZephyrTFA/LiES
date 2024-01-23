@@ -1,8 +1,6 @@
-use std::{borrow::BorrowMut, fmt::Display, process::exit, thread::sleep, time::Duration};
+use std::fmt::Display;
 
-use log::{debug, error, trace};
-use once_cell::sync::Lazy;
-use regex::Regex;
+use log::{error, trace};
 
 use crate::util::{
     condense_lines::condense_lines,

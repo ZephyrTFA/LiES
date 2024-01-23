@@ -1,4 +1,4 @@
-use log::{debug, error, trace, warn};
+use log::{debug, error, trace};
 use once_cell::sync::Lazy;
 
 use crate::{
@@ -65,7 +65,7 @@ impl DmPreProcessor {
                                 if let Some(Ok(rhs)) =
                                     args.get(op_index + 1).map(|x| x.parse::<i32>())
                                 {
-                                    args[op_index - 1] = if (lhs > 0 || rhs > 0) {
+                                    args[op_index - 1] = if lhs > 0 || rhs > 0 {
                                         "1".to_owned()
                                     } else {
                                         "0".to_owned()
@@ -82,7 +82,7 @@ impl DmPreProcessor {
                                 if let Some(Ok(rhs)) =
                                     args.get(op_index + 1).map(|x| x.parse::<i32>())
                                 {
-                                    args[op_index - 1] = if (lhs > 0 && rhs > 0) {
+                                    args[op_index - 1] = if lhs > 0 && rhs > 0 {
                                         "1".to_owned()
                                     } else {
                                         "0".to_owned()
@@ -239,6 +239,5 @@ impl DmPreProcessor {
                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
             }
         }
-        unreachable!()
     }
 }

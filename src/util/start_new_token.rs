@@ -1,7 +1,3 @@
-use ::log::error;
-
-use crate::util::log;
-
 use super::determine_token_action::TokenAction;
 
 const SYM_MATH: &[char; 8] = &['+', '-', '*', '/', '%', '^', '&', '|'];

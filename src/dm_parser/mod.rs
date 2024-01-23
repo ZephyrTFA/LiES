@@ -1,20 +1,16 @@
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
-    process::exit,
 };
 
 use log::{debug, error, info, trace, warn};
 
-use crate::{
-    dm_preprocessor::DmPreProcessor,
-    util::{dm_file::DmFile, exit_codes::ERROR_CODE_DIRECTORY_TRAVERSAL_FAILED},
-};
+use crate::{dm_preprocessor::DmPreProcessor, util::dm_file::DmFile};
 
 pub struct DmParser {
     preprocessor: DmPreProcessor,
     /// The order in which files were included. Uses a relative path from the environment directory.
-    include_order: Vec<PathBuf>,
+    _include_order: Vec<PathBuf>,
     environment_directory: PathBuf,
     environment_traversal: Vec<PathBuf>,
 }
@@ -28,7 +24,7 @@ impl DmParser {
         );
         Self {
             preprocessor: DmPreProcessor::new(),
-            include_order: vec![],
+            _include_order: vec![],
             environment_directory,
             environment_traversal: vec![],
         }
@@ -95,7 +91,7 @@ impl DmParser {
         let file = DmFile::new(&self.environment_directory, file.into())?;
         let tokens = self.preprocessor.preprocess(&file);
         warn!("parsing not yet implemented.");
-        for token in tokens {}
+        for _token in tokens {}
         Ok(())
     }
 }

@@ -1,4 +1,4 @@
-use log::{error, warn};
+use log::error;
 
 use crate::{
     dm_preprocessor::{token_handling::DmToken, DmPreProcessor},
