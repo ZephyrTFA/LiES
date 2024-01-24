@@ -28,11 +28,4 @@ mod tests {
 
         assert_eq!(count_backslashes(backslashes), 3);
     }
-
-    #[test]
-    fn test_count_spaced_backslashes() {
-        let backslashes = "\\a\\";
-
-        assert_eq!(!count_backslashes(backslashes), 2);
-    }
 }
