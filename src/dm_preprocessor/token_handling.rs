@@ -3,6 +3,7 @@ use std::fmt::Display;
 use log::{error, trace};
 
 use crate::util::{
+    condense_brackets::condense_braces,
     condense_lines::condense_lines,
     count_backslashes,
     determine_token_action::{determine_token_action, TokenAction},
@@ -211,6 +212,7 @@ impl TokenizeState {
 impl DmPreProcessor {
     pub fn tokenize(&mut self, lines: &[impl Into<String> + Clone]) -> Vec<DmToken> {
         let condensed_lines: Vec<String> = condense_lines(lines);
+        let condensed_lines = condense_braces(&condensed_lines);
         let mut tokens: Vec<DmToken> = vec![];
 
         for line in condensed_lines {
