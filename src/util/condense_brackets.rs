@@ -1,6 +1,5 @@
-use std::panic;
-
 use ::log::{error, trace};
+use std::panic;
 
 /// Iterates through a slice of string like objects and condenses curly braces into a single line.
 /// Must be done after condense_lines.
@@ -90,6 +89,7 @@ fn test_walk_ending_brace_strings() {
             "multi-line brace\"} in it".to_string(),
         ]
     );
+
     let output = walk_to_next_ending_brace(&mut input);
     assert_eq!(output, "Line with \"a string multi-line brace\" in it");
     assert!(input.is_empty());
@@ -121,8 +121,12 @@ fn walk_to_next_ending_brace(lines: &mut Vec<String>) -> String {
     let mut braces = 0;
     let mut first_brace_spliced = false;
     let mut first_brace: isize = -1;
+    let mut quoted = false;
     while !lines.is_empty() {
-        let mut quoted = false;
+        if braces == 0 {
+            quoted = false;
+        }
+
         let mut escaped = false;
         let line = lines.remove(0);
         trace!("Line: `{}`", line);
