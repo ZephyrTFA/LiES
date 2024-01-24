@@ -2,7 +2,7 @@ use log::{debug, error, trace};
 use once_cell::sync::Lazy;
 
 use crate::{
-    dm_preprocessor::{token_handling::DmToken, DmPreProcessor},
+    dm_preprocessor::{token::dm_token::DmToken, DmPreProcessor},
     util::ParseError,
 };
 

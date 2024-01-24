@@ -6,7 +6,7 @@ use regex::Regex;
 
 use crate::util::{dm_file::DmFile, exit_codes::ERROR_CODE_PATTERN_NOT_FOUND};
 
-use super::{token_handling::DmToken, DmPreProcessor};
+use super::{token::dm_token::DmToken, DmPreProcessor};
 
 impl DmPreProcessor {
     pub fn preprocess(&mut self, file: &DmFile) -> Vec<DmToken> {

@@ -1,4 +1,4 @@
-use crate::dm_preprocessor::token_handling::DmToken;
+use super::dm_token::DmToken;
 
 // Returns true if the line is empty or only contains whitespace.
 pub fn is_first_non_whitespace_char(line_tokens: &[DmToken]) -> bool {
