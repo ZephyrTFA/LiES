@@ -10,7 +10,6 @@ pub fn count_backslashes(string: &str) -> usize {
     }
     count
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
