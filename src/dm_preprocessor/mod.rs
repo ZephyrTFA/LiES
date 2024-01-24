@@ -1,15 +1,13 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use self::{define_definition::DmDefineDefinition, token_handling::TokenizeState};
+use self::define_definition::DmDefineDefinition;
+use self::token::tokenize_state::TokenizeState;
 
 pub mod define_definition;
 pub mod directive;
 pub mod preprocess_core;
 mod stddef_defines;
-pub mod token_handling;
-
-// #[cfg(test)]
-mod tests;
+pub mod token;
 
 /**
  * The preprocessor is responsible for handling all preprocessor directives.

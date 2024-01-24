@@ -1,7 +1,7 @@
 use log::warn;
 
 use crate::{
-    dm_preprocessor::{token_handling::DmToken, DmPreProcessor},
+    dm_preprocessor::{token::dm_token::DmToken, DmPreProcessor},
     util::ParseError,
 };
 

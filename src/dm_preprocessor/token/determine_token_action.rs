@@ -1,10 +1,8 @@
 use std::fmt::Display;
 
-use crate::dm_preprocessor::token_handling::TokenizeState;
-
 use super::{
-    count_backslashes, start_new_token::get_default_token_action,
-    whitespace_char::is_first_non_whitespace_char,
+    count_backslashes::count_backslashes, default_token_action::get_default_token_action,
+    tokenize_state::TokenizeState, whitespace_char::is_first_non_whitespace_char,
 };
 
 #[derive(Debug, PartialEq)]
