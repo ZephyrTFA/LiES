@@ -70,6 +70,7 @@ impl DmParser {
             panic!();
         }
 
+        self.preprocessor.add_to_include_order(&actual_path);
         let result = self.parse_file(&actual_path);
         if result.is_ok() {
             trace!("Successfully loaded file {}", actual_path.display());

@@ -269,16 +269,16 @@ impl DmPreProcessor {
                 );
                 panic!();
             }
+        }
 
-            if self.tokenize_state.unmatched_brackets() {
-                error!("Unmatched brackets in line `{}`", line);
-                panic!();
-            }
-
-            if self.tokenize_state.in_string_interop() {
-                error!("Unmatched string interop in line `{}`", line);
-                panic!();
-            }
+        let path = self.get_current_file();
+        if self.tokenize_state.unmatched_brackets() {
+            error!("Unmatched brackets in file `{}`", path.display());
+            panic!();
+        }
+        if self.tokenize_state.in_string_interop() {
+            error!("Unmatched string interop in file `{}`", path.display());
+            panic!();
         }
 
         tokens

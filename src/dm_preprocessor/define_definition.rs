@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 
+use super::token_handling::DmToken;
+
+#[derive(Debug, Clone)]
 pub struct DmDefineDefinition {
     name: String,
-    body: String,
-    is_macro: bool,
-    macro_args: Vec<String>,
+    body: Vec<DmToken>,
+    macro_args: Option<Vec<String>>,
 }
 
 impl DmDefineDefinition {
@@ -18,46 +20,39 @@ impl DmDefineDefinition {
         &self.name
     }
 
-    pub fn body(&self) -> &str {
+    pub fn body(&self) -> &[DmToken] {
         &self.body
     }
 
     pub fn is_macro(&self) -> bool {
-        self.is_macro
+        self.macro_args.is_some()
     }
 
     pub fn macro_args(&self) -> &[String] {
-        &self.macro_args
+        self.macro_args.as_ref().unwrap()
     }
 
-    pub fn new_flag(name: impl Into<String>) -> Self {
+    pub fn new_flag(name: &str) -> Self {
         Self {
             name: name.into(),
-            body: String::new(),
-            is_macro: false,
-            macro_args: vec![],
+            body: vec![],
+            macro_args: None,
         }
     }
 
-    pub fn new_basic_replace(name: impl Into<String>, body: impl Into<String>) -> Self {
+    pub fn new_basic_replace(name: &str, body: &[DmToken]) -> Self {
         Self {
             name: name.into(),
-            body: body.into(),
-            is_macro: false,
-            macro_args: vec![],
+            body: body.to_owned(),
+            macro_args: None,
         }
     }
 
-    pub fn new_macro(
-        name: impl Into<String>,
-        macro_args: Vec<String>,
-        body: impl Into<String>,
-    ) -> Self {
+    pub fn new_macro(name: &str, body: Vec<DmToken>, macro_args: Vec<String>) -> Self {
         Self {
             name: name.into(),
-            body: body.into(),
-            is_macro: true,
-            macro_args,
+            body,
+            macro_args: Some(macro_args),
         }
     }
 }

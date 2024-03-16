@@ -22,6 +22,12 @@ impl DmPreProcessor {
             }
 
             let token = tokens.remove(0);
+            let token = self.do_define_replacement(token, &mut tokens);
+            if token.is_none() {
+                continue;
+            }
+            let token = token.unwrap();
+
             let token = token.value();
 
             if let Some(until_token) = &skip_until_regex {

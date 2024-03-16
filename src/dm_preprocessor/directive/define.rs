@@ -14,10 +14,9 @@ impl DmPreProcessor {
             return Err(ParseError::ERROR_DIRECTIVE_PARSE);
         }
 
-        let name = args[0].value().to_owned();
+        let name = args[0].value();
         if args.len() == 1 {
-            self.defines
-                .insert(name.clone(), DmDefineDefinition::new_flag(name));
+            DmDefineDefinition::new_flag(name).insert_into_map(&mut self.defines);
             return Ok(());
         }
 
@@ -27,17 +26,12 @@ impl DmPreProcessor {
             return Ok(());
         }
 
-        let body = define_args
-            .iter()
-            .map(|token| token.value())
-            .collect::<Vec<_>>()
-            .concat()
-            .trim()
-            .to_owned();
-        self.defines.insert(
-            name.clone(),
-            DmDefineDefinition::new_basic_replace(name, body),
-        );
+        let body: Vec<_> = args.iter().skip(1).cloned().collect();
+        DmDefineDefinition::new_basic_replace(
+            name,
+            &body,
+        )
+        .insert_into_map(&mut self.defines);
 
         Ok(())
     }

@@ -27,6 +27,7 @@ impl DmPreProcessor {
             effective_args.push(arg);
         }
 
+        self.replace_all_defines_possible(&mut effective_args);
         while !effective_args.is_empty() {
             if effective_args
                 .first()
