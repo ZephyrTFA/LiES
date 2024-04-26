@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::token_handling::DmToken;
 
 #[derive(Debug, Clone)]
@@ -10,12 +8,6 @@ pub struct DmDefineDefinition {
 }
 
 impl DmDefineDefinition {
-    pub fn insert_into_map(self, map: &mut HashMap<String, DmDefineDefinition>) -> &Self {
-        let name = self.name.clone();
-        map.insert(self.name.clone(), self);
-        map.get(&name).unwrap()
-    }
-
     pub fn name(&self) -> &str {
         &self.name
     }

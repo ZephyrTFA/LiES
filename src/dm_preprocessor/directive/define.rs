@@ -16,7 +16,7 @@ impl DmPreProcessor {
 
         let name = args[0].value();
         if args.len() == 1 {
-            DmDefineDefinition::new_flag(name).insert_into_map(&mut self.defines);
+            self.add_define(DmDefineDefinition::new_flag(name));
             return Ok(());
         }
 
@@ -27,11 +27,7 @@ impl DmPreProcessor {
         }
 
         let body: Vec<_> = args.iter().skip(1).cloned().collect();
-        DmDefineDefinition::new_basic_replace(
-            name,
-            &body,
-        )
-        .insert_into_map(&mut self.defines);
+        self.add_define(DmDefineDefinition::new_basic_replace(name, &body));
 
         Ok(())
     }

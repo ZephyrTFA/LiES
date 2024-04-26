@@ -11,7 +11,7 @@ impl DmPreProcessor {
             warn!("`undef` requires one argument");
             return Err(ParseError::ERROR_DIRECTIVE_PARSE);
         }
-        self.defines.remove(args[0].value());
+        self.remove_define(args[0].value());
         Ok(())
     }
 }

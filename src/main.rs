@@ -15,5 +15,5 @@ pub fn main() -> Result<(), String> {
 
     let mut parser = DmParser::new("D:/ss13/tgstation");
     parser.load("tgstation.dme")
-    // parser.load(r"code\datums\mergers\_merger.dm")
+    // parser.load(r"code\datums\components\ranged_mob_full_auto.dm")
 }

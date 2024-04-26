@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use log::{error, warn};
+use log::{debug, error, warn};
 #[cfg(test)]
 use once_cell::sync::Lazy;
 
@@ -43,13 +43,17 @@ impl Default for DmPreProcessor {
 
 impl DmPreProcessor {
     pub fn new() -> Self {
-        Self {
-            defines: Self::initial_defines(),
+        let mut _self = Self {
+            defines: HashMap::new(),
             logical_skip_levels: 0,
             pending_includes: vec![],
             tokenize_state: TokenizeState::default(),
             include_order: vec![],
+        };
+        for define in Self::initial_defines() {
+            _self.add_define(define);
         }
+        _self
     }
 
     pub fn add_to_include_order(&mut self, path: &Path) {
@@ -80,10 +84,21 @@ impl DmPreProcessor {
     }
 
     pub fn add_define(&mut self, define: DmDefineDefinition) {
+        debug!("Adding define `{}`", define.name());
+        assert!(define.name() != "1");
+        // name cannot start or end with whitespace
+        assert!(!define.name().starts_with(char::is_whitespace));
+        assert!(!define.name().ends_with(char::is_whitespace));
+        // body cannot start or end with whitespace
+        if !define.body().is_empty() {
+            assert!(!define.body().first().unwrap().value().is_empty());
+            assert!(!define.body().last().unwrap().value().is_empty());
+        }
         self.defines.insert(define.name().to_string(), define);
     }
 
     pub fn remove_define(&mut self, name: &str) {
+        debug!("Removing define `{}`", name);
         self.defines.remove(name);
     }
 
@@ -174,12 +189,29 @@ impl DmPreProcessor {
     /// Prefer do_define_replacement wherever possible to not ignore defines as they get added.
     /// This should only be called in places where you know that no defines will be added.
     /// Such as inside of a macro or preprocessor directive parsing.
-    fn replace_all_defines_possible(&self, tokens: &mut Vec<DmToken>) {
+    fn replace_all_defines_possible(
+        &self,
+        tokens: &mut Vec<DmToken>,
+        in_preprocessoer_directive: bool,
+    ) {
         let mut return_tokens = vec![];
 
         while !tokens.is_empty() {
-            let token = tokens.remove(0);
-            let token = self.do_define_replacement(token, tokens);
+            let mut token = Some(tokens.remove(0));
+
+            match in_preprocessoer_directive {
+                true if token.as_ref().unwrap().value() == "defined" => {
+                    return_tokens.push(token.unwrap());
+                    return_tokens.push(tokens.remove(0)); // (
+                    return_tokens.push(tokens.remove(0)); // identifier
+                    return_tokens.push(tokens.remove(0)); // )
+                    continue;
+                }
+                _ => {
+                    token = self.do_define_replacement(token.unwrap(), tokens);
+                }
+            };
+
             if let Some(token) = token {
                 return_tokens.push(token);
             }

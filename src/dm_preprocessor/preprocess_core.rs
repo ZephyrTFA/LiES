@@ -13,7 +13,7 @@ impl DmPreProcessor {
         let mut tokens = self.tokenize(file.lines());
         let mut skip_until_regex: Option<Regex> = None;
 
-        let mut in_quote = None;
+        let mut in_quote: Option<char> = None;
 
         let mut final_tokens: Vec<DmToken> = vec![];
         loop {
@@ -22,7 +22,12 @@ impl DmPreProcessor {
             }
 
             let token = tokens.remove(0);
-            let token = self.do_define_replacement(token, &mut tokens);
+            let token = if in_quote.is_none() {
+                self.do_define_replacement(token, &mut tokens)
+            } else {
+                Some(token)
+            };
+
             if token.is_none() {
                 continue;
             }
@@ -71,10 +76,13 @@ impl DmPreProcessor {
                         break;
                     }
                 }
-                match self.handle_directive(directive, args) {
+
+                match self.handle_directive(directive, &args) {
                     Ok(()) => {}
                     Err(code) => {
-                        error!("PreProcessor error: {}", code);
+                        error!(
+                            "PreProcessor Error ({code}): {directive} with the following args: {args:#?}"
+                        );
                         panic!();
                     }
                 }

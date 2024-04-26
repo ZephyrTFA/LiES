@@ -1,4 +1,4 @@
-use log::{error, warn};
+use log::{debug, error, warn};
 
 use crate::util::ParseError;
 
@@ -17,9 +17,22 @@ impl DmPreProcessor {
     pub(super) fn handle_directive(
         &mut self,
         directive: &str,
-        args: Vec<DmToken>,
+        args: &[DmToken],
     ) -> Result<(), ParseError> {
+        debug!("Handling directive `{directive}` with args `{args:#?}`");
+
+        // explicitly handle define preprocessing here before we perform define replacement
+        match directive {
+            "ifdef" => return self.handle_ifdef(args),
+            "ifndef" => return self.handle_ifndef(args),
+            "define" => return self.handle_define(args),
+            "undef" => return self.handle_undef(args),
+            _ => {}
+        }
+
         let mut effective_args: Vec<DmToken> = vec![];
+        let args: Vec<DmToken> = args.into();
+
         for arg in args {
             if arg.value().contains("//") {
                 break;
@@ -27,7 +40,7 @@ impl DmPreProcessor {
             effective_args.push(arg);
         }
 
-        self.replace_all_defines_possible(&mut effective_args);
+        self.replace_all_defines_possible(&mut effective_args, true);
         while !effective_args.is_empty() {
             if effective_args
                 .first()
@@ -78,17 +91,13 @@ impl DmPreProcessor {
         }
 
         match directive {
-            "define" => self.handle_define(&effective_args),
             "error" => self.handle_error(&effective_args),
             "if" => self.handle_if(&effective_args),
-            "ifdef" => self.handle_ifdef(&effective_args),
-            "ifndef" => self.handle_ifndef(&effective_args),
             "include" => self.handle_include(&effective_args),
-            "undef" => self.handle_undef(&effective_args),
             "warn" => self.handle_warn(&effective_args),
             _ => {
                 error!(
-                    "Unknown directive `{}` with args `{:#?}`",
+                    "Unhandled directive `{}` with args `{:#?}`",
                     directive, effective_args
                 );
                 panic!();

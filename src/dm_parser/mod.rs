@@ -85,6 +85,7 @@ impl DmParser {
         self.environment_traversal
             .pop() // not returning an Err here because this SHOULD not be possible
             .expect("failed to pop directory traversal?");
+
         result
     }
 
