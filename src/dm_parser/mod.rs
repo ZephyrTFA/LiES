@@ -3,7 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, info, trace};
+
+#[cfg(not(debug_assertions))]
+use log::warn;
 
 use crate::{dm_preprocessor::DmPreProcessor, util::dm_file::DmFile};
 
@@ -92,6 +95,7 @@ impl DmParser {
     fn parse_file(&mut self, file: impl Into<PathBuf>) -> Result<(), String> {
         let file = DmFile::new(&self.environment_directory, file.into())?;
         let tokens = self.preprocessor.preprocess(&file);
+        #[cfg(not(debug_assertions))]
         warn!("parsing not yet implemented.");
         for _token in tokens {}
         Ok(())

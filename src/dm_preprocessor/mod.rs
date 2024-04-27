@@ -3,7 +3,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use log::{debug, error, warn};
+use log::{debug, error};
+
+#[cfg(not(debug_assertions))]
+use log::warn;
+
 #[cfg(test)]
 use once_cell::sync::Lazy;
 
@@ -144,7 +148,7 @@ impl DmPreProcessor {
     }
 
     fn do_macro_replacement(
-        macro_definition: &DmDefineDefinition,
+        _macro_definition: &DmDefineDefinition,
         tokens: &mut Vec<DmToken>,
     ) -> Option<DmToken> {
         if tokens.is_empty() || tokens.remove(0).value() != "(" {
@@ -182,6 +186,7 @@ impl DmPreProcessor {
             }
         }
 
+        #[cfg(not(debug_assertions))]
         warn!("macros are not yet implemented, '{macro_definition:#?}' args {args:#?}");
         None
     }

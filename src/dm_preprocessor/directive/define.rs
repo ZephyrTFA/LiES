@@ -22,13 +22,18 @@ impl DmPreProcessor {
 
         let define_args = &args[1..];
         if define_args[0].value() == "(" {
-            warn!("macros are not implemented yet");
-            return Ok(());
+            return self.handle_macro(name, define_args);
         }
 
         let body: Vec<_> = args.iter().skip(1).cloned().collect();
         self.add_define(DmDefineDefinition::new_basic_replace(name, &body));
 
+        Ok(())
+    }
+
+    fn handle_macro(&mut self, _name: &str, _args: &[DmToken]) -> Result<(), ParseError> {
+        #[cfg(not(debug_assertions))]
+        warn!("macros are not implemented yet");
         Ok(())
     }
 }
