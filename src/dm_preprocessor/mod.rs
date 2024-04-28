@@ -22,8 +22,10 @@ pub mod define_definition;
 pub mod directive;
 pub mod preprocess_core;
 mod stddef_defines;
-mod tests;
 pub mod token_handling;
+
+#[cfg(test)]
+mod tests;
 
 /**
  * The preprocessor is responsible for handling all preprocessor directives.
