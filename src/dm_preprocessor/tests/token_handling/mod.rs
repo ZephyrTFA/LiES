@@ -5,6 +5,7 @@ mod condense;
 mod empty;
 mod hard_lines;
 mod interop_nested;
+mod multi_empty;
 mod multi_line;
 mod quote_interior;
 mod single_line;
