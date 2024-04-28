@@ -1,9 +1,8 @@
-use std::fmt::Display;
+use std::{collections::VecDeque, fmt::Display};
 
 use log::{error, trace};
 
 use crate::util::{
-    condense_brackets::condense_braces,
     condense_lines::condense_lines,
     count_backslashes,
     determine_token_action::{determine_token_action, TokenAction},
@@ -38,6 +37,18 @@ impl From<&str> for DmToken {
     }
 }
 
+impl From<&char> for DmToken {
+    fn from(value: &char) -> Self {
+        Self::new(value.to_string())
+    }
+}
+
+impl From<char> for DmToken {
+    fn from(value: char) -> Self {
+        Self::new(value.to_string())
+    }
+}
+
 impl From<String> for DmToken {
     fn from(value: String) -> Self {
         Self::from(value.as_str())
@@ -60,6 +71,8 @@ pub struct TokenizeState {
     string_interop_count: usize,
     unmatched_brackets: Vec<usize>,
     string_literal: bool,
+    multiline_string: bool,
+    string_interop_buckets: VecDeque<(bool, bool)>,
 }
 
 impl TokenizeState {
@@ -74,6 +87,19 @@ impl TokenizeState {
             trace!("Setting string literal to false");
         }
         self.string_literal = string_literal;
+    }
+
+    pub fn multiline_string(&self) -> bool {
+        self.multiline_string
+    }
+
+    pub fn set_multiline_string(&mut self, multiline_string: bool) {
+        if multiline_string != self.multiline_string {
+            trace!("Setting multiline string to true");
+        } else {
+            trace!("Setting multiline string to false");
+        }
+        self.multiline_string = multiline_string;
     }
 
     pub fn unmatched_brackets(&self) -> bool {
@@ -108,6 +134,10 @@ impl TokenizeState {
     pub fn increment_string_interop_count(&mut self) {
         self.unmatched_brackets.push(0);
         self.string_interop_count += 1;
+        self.string_interop_buckets
+            .push_front((self.multiline_string, self.string_literal));
+        self.multiline_string = false;
+        self.string_literal = false;
         trace!(
             "Incrementing string interop count to {}",
             self.string_interop_count
@@ -119,6 +149,9 @@ impl TokenizeState {
             panic!("Unmatched brackets in string interop");
         }
         self.string_interop_count -= 1;
+        let (multiline_string, string_literal) = self.string_interop_buckets.pop_front().unwrap();
+        self.multiline_string = multiline_string;
+        self.string_literal = string_literal;
         trace!(
             "Decrementing string interop count to {}",
             self.string_interop_count
@@ -207,12 +240,20 @@ impl TokenizeState {
         }
         count_backslashes(last.unwrap().value()) % 2 == 1
     }
+
+    pub fn is_last_token(&self, chars: &[char]) -> bool {
+        let last: Option<&DmToken> = self.line_tokens.last();
+        if last.is_none() {
+            return false;
+        }
+        last.unwrap().value().ends_with(chars)
+    }
 }
 
 impl DmPreProcessor {
     pub fn tokenize(&mut self, lines: &[impl Into<String> + Clone]) -> Vec<DmToken> {
         let condensed_lines: Vec<String> = condense_lines(lines);
-        let condensed_lines = condense_braces(&condensed_lines);
+        // let condensed_lines = condense_braces(&condensed_lines);
         let mut tokens: Vec<DmToken> = vec![];
 
         for line in condensed_lines {
@@ -221,9 +262,12 @@ impl DmPreProcessor {
             self.tokenize_state.set_comment_single(false);
 
             trace!("Tokenizing line: `{}`", line);
-            for char in line.chars() {
+            let mut chars = line.chars().peekable();
+            while let Some(char) = chars.next() {
                 trace!("Char: `{}`", char.escape_debug());
-                let next_action = determine_token_action(&mut self.tokenize_state, char, &token);
+
+                let next_action =
+                    determine_token_action(&mut self.tokenize_state, char, &token, &mut chars);
                 match next_action {
                     TokenAction::StartNewToken => {
                         if !token.is_empty() {
@@ -246,6 +290,9 @@ impl DmPreProcessor {
                         self.tokenize_state.add_line_token(char.to_string());
                         token = String::new();
                     }
+                    TokenAction::DropToken => {
+                        token = String::new();
+                    }
                     _ => {
                         error!(
                             "Unexpected token action `{}` with char {}",
@@ -261,7 +308,10 @@ impl DmPreProcessor {
             }
             self.tokenize_state.add_line_token("\n");
             tokens.append(&mut self.tokenize_state.finalize_line_tokens());
-            if self.tokenize_state.in_quote().is_some() && !self.tokenize_state.in_preprocessor() {
+            if self.tokenize_state.in_quote().is_some()
+                && !self.tokenize_state.in_preprocessor()
+                && !self.tokenize_state.multiline_string()
+            {
                 error!(
                     "Unterminated quote `{}` in line `{}`",
                     self.tokenize_state.in_quote().unwrap(),
@@ -278,6 +328,10 @@ impl DmPreProcessor {
         }
         if self.tokenize_state.in_string_interop() {
             error!("Unmatched string interop in file `{}`", path.display());
+            panic!();
+        }
+        if self.tokenize_state.multiline_string() {
+            error!("Unterminated multiline string in file `{}`", path.display());
             panic!();
         }
 

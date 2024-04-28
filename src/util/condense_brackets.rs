@@ -30,6 +30,7 @@ fn test_condense_braces() {
         "And another line without",
         "And now a string with a brace in it: @{\"a string",
         " brace\"} in it",
+        "{\"\"\"}",
     ];
     let output = condense_braces(&input);
     assert_eq!(
@@ -40,6 +41,7 @@ fn test_condense_braces() {
             "Line with a brace in it and another brace in it".to_string(),
             "And another line without".to_string(),
             "And now a string with a brace in it: @\"a string brace\" in it".to_string(),
+            "\"\\\"\"".to_string(),
         ]
     );
 }

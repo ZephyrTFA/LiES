@@ -1,6 +1,6 @@
-use std::fmt::Display;
+use std::{fmt::Display, iter::Peekable, str::Chars};
 
-use crate::dm_preprocessor::token_handling::TokenizeState;
+use crate::dm_preprocessor::token_handling::{DmToken, TokenizeState};
 
 use super::{
     count_backslashes, start_new_token::get_default_token_action,
@@ -19,6 +19,8 @@ pub enum TokenAction {
     IsolateToken,
     /// Ignore the current character.
     None,
+    /// Drop the current token and character.
+    DropToken,
 }
 
 impl Display for TokenAction {
@@ -29,6 +31,7 @@ impl Display for TokenAction {
             TokenAction::EndToken => write!(f, "EndToken"),
             TokenAction::IsolateToken => write!(f, "IsolateToken"),
             TokenAction::None => write!(f, "None"),
+            TokenAction::DropToken => write!(f, "DropToken"),
         }
     }
 }
@@ -38,9 +41,14 @@ pub fn determine_token_action(
     state: &mut TokenizeState,
     char: char,
     current_token: &str,
+    remaining_chars: &mut Peekable<Chars>,
 ) -> TokenAction {
     if let Some(quote_char) = state.in_quote() {
         if char == *quote_char && count_backslashes(current_token) % 2 == 0 {
+            if state.multiline_string() {
+                return TokenAction::ContinueToken;
+            }
+
             state.set_in_quote(None);
             return TokenAction::StartNewToken;
         } else {
@@ -53,6 +61,11 @@ pub fn determine_token_action(
                     state.set_in_quote(None);
                     TokenAction::IsolateToken
                 }
+                '}' if state.multiline_string() && current_token.ends_with(*quote_char) => {
+                    state.set_in_quote(None);
+                    state.set_multiline_string(false);
+                    TokenAction::IsolateToken
+                }
                 _ => TokenAction::ContinueToken,
             };
         }
@@ -60,7 +73,9 @@ pub fn determine_token_action(
 
     match char {
         ']' if !state.in_comment_any() && !state.string_literal() => {
-            if state.is_last_token_an_escape() {
+            if (current_token.is_empty() && state.is_last_token_an_escape())
+                || count_backslashes(current_token) % 2 == 1
+            {
                 return get_default_token_action(char, current_token);
             } else if state.unmatched_brackets() {
                 state.decrement_unmatched_brackets();
@@ -82,6 +97,7 @@ pub fn determine_token_action(
                 return if char == '"' {
                     if state.in_preprocessor() {
                         state.set_in_quote(Some(char));
+                        state.set_multiline_string(current_token.ends_with('{'));
                     }
                     TokenAction::IsolateToken
                 } else {
@@ -90,7 +106,8 @@ pub fn determine_token_action(
             }
 
             state.set_in_quote(Some(char));
-            state.set_string_literal(current_token.ends_with('@'));
+            state.set_string_literal(current_token.ends_with(&['@']));
+            state.set_multiline_string(current_token.ends_with('{'));
             TokenAction::IsolateToken
         }
         '#' => {
@@ -150,6 +167,23 @@ pub fn determine_token_action(
                 }
                 _ => get_default_token_action(char, current_token),
             }
+        }
+        '@' => {
+            if state.in_comment_any() {
+                return get_default_token_action(char, current_token);
+            }
+
+            if state.is_last_token_an_escape() {
+                return get_default_token_action(char, current_token);
+            }
+
+            let next_char = remaining_chars.next().unwrap();
+            if !current_token.is_empty() {
+                state.add_line_token(DmToken::from(current_token));
+            }
+            state.add_line_token(DmToken::from(next_char));
+            state.set_in_quote(Some(next_char));
+            TokenAction::DropToken
         }
         _ => get_default_token_action(char, current_token),
     }
