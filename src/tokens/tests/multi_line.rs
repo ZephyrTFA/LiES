@@ -1,10 +1,10 @@
 #[test]
-fn test_tokenize_single_line() {
-    use crate::dm_preprocessor::{DmPreProcessor, DmToken};
+fn test_tokenize_multiple_lines() {
+    use crate::{dm_preprocessor::lib::DmPreProcessor, tokens::dm_token::DmToken};
 
     let mut preprocessor = DmPreProcessor::new();
 
-    let lines = vec!["This is a test."];
+    let lines = vec!["This is a test.", "Another test."];
 
     let expected = vec![
         DmToken::from("This"),
@@ -12,6 +12,11 @@ fn test_tokenize_single_line() {
         DmToken::from("is"),
         DmToken::from(" "),
         DmToken::from("a"),
+        DmToken::from(" "),
+        DmToken::from("test"),
+        DmToken::from("."),
+        DmToken::from("\n"),
+        DmToken::from("Another"),
         DmToken::from(" "),
         DmToken::from("test"),
         DmToken::from("."),

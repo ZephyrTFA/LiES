@@ -1,7 +1,4 @@
-use crate::{
-    dm_preprocessor::{token_handling::DmToken, DmPreProcessor},
-    util::ParseError,
-};
+use crate::{dm_preprocessor::lib::DmPreProcessor, tokens::dm_token::DmToken, util::ParseError};
 
 impl DmPreProcessor {
     pub(super) fn handle_ifndef(&mut self, args: &[DmToken]) -> Result<(), ParseError> {

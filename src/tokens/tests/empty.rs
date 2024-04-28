@@ -1,6 +1,6 @@
 #[test]
 fn test_tokenize_empty() {
-    use crate::dm_preprocessor::DmPreProcessor;
+    use crate::dm_preprocessor::lib::DmPreProcessor;
 
     let mut preprocessor = DmPreProcessor::new();
 

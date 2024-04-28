@@ -1,4 +1,4 @@
-use super::token_handling::DmToken;
+use crate::tokens::dm_token::DmToken;
 
 #[derive(Debug, Clone)]
 pub struct DmDefineDefinition {

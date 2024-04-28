@@ -1,6 +1,6 @@
 #[test]
 fn test_tokenize_comment_multline_commented_bad_end() {
-    use crate::dm_preprocessor::{DmPreProcessor, DmToken};
+    use crate::{dm_preprocessor::lib::DmPreProcessor, tokens::dm_token::DmToken};
 
     let mut preprocesser = DmPreProcessor::new();
 

@@ -1,6 +1,6 @@
 #[test]
 fn test_tokenize_preprocess_unmatched_quotes() {
-    use crate::dm_preprocessor::{DmPreProcessor, DmToken};
+    use crate::{dm_preprocessor::lib::DmPreProcessor, tokens::dm_token::DmToken};
 
     let mut preprocesser = DmPreProcessor::new();
 

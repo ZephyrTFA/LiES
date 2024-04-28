@@ -4,9 +4,12 @@ use log::error;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::util::{dm_file::DmFile, exit_codes::ERROR_CODE_PATTERN_NOT_FOUND};
+use crate::{
+    tokens::dm_token::DmToken,
+    util::{dm_file::DmFile, exit_codes::ERROR_CODE_PATTERN_NOT_FOUND},
+};
 
-use super::{token_handling::DmToken, DmPreProcessor};
+use super::lib::DmPreProcessor;
 
 impl DmPreProcessor {
     pub fn preprocess(&mut self, file: &DmFile) -> Vec<DmToken> {

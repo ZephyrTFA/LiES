@@ -1,4 +1,4 @@
-use super::{define_definition::DmDefineDefinition, DmPreProcessor};
+use super::{define_definition::DmDefineDefinition, lib::DmPreProcessor};
 
 impl DmPreProcessor {
     pub(super) fn initial_defines() -> Vec<DmDefineDefinition> {
