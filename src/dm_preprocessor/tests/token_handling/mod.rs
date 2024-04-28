@@ -1,0 +1,13 @@
+mod comment;
+mod comment_multiline;
+mod comment_multiline_bad;
+mod condense;
+mod empty;
+mod hard_lines;
+mod interop_nested;
+mod multi_empty;
+mod multi_line;
+mod quote_interior;
+mod single_line;
+mod string_interop;
+mod unmatched_quotes;
