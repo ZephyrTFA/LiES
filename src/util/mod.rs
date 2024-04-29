@@ -1,6 +1,5 @@
 use std::fmt::{Display, Formatter};
 
-pub mod condense_brackets;
 pub mod condense_lines;
 pub mod dm_file;
 pub mod exit_codes;

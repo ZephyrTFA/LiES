@@ -12,8 +12,6 @@ pub enum TokenAction {
     IsolateToken,
     /// Ignore the current character.
     None,
-    /// Drop the current token and character.
-    DropToken,
 }
 
 impl Display for TokenAction {
@@ -24,7 +22,6 @@ impl Display for TokenAction {
             TokenAction::EndToken => write!(f, "EndToken"),
             TokenAction::IsolateToken => write!(f, "IsolateToken"),
             TokenAction::None => write!(f, "None"),
-            TokenAction::DropToken => write!(f, "DropToken"),
         }
     }
 }

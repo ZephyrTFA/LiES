@@ -1,12 +1,11 @@
-use std::{iter::Peekable, str::Chars};
-
 use crate::{
     dm_preprocessor::tokenize_state::TokenizeState,
     util::{count_backslashes, whitespace_char::is_first_non_whitespace_char},
 };
 
 use super::{
-    default_token_action::get_default_token_action, dm_token::DmToken, token_action::TokenAction,
+    default_token_action::get_default_token_action,
+    string_special_escape::get_string_special_escape_action, token_action::TokenAction,
 };
 
 // Non default token actions
@@ -14,7 +13,6 @@ pub fn determine_token_action(
     state: &mut TokenizeState,
     char: char,
     current_token: &str,
-    remaining_chars: &mut Peekable<Chars>,
 ) -> TokenAction {
     if let Some(quote_char) = state.in_quote() {
         if char == *quote_char && count_backslashes(current_token) % 2 == 0 {
@@ -150,13 +148,7 @@ pub fn determine_token_action(
                 return get_default_token_action(char, current_token);
             }
 
-            let next_char = remaining_chars.next().unwrap();
-            if !current_token.is_empty() {
-                state.add_line_token(DmToken::from(current_token));
-            }
-            state.add_line_token(DmToken::from(next_char));
-            state.set_in_quote(Some(next_char));
-            TokenAction::DropToken
+            get_string_special_escape_action(char, current_token, state)
         }
         _ => get_default_token_action(char, current_token),
     }

@@ -2,10 +2,15 @@ use std::collections::VecDeque;
 
 use log::trace;
 
-use crate::{tokens::dm_token::DmToken, util::count_backslashes};
+use crate::{
+    tokens::dm_token::DmToken,
+    util::{condense_lines::condense_lines, count_backslashes},
+};
 
 #[derive(Debug, Default)]
 pub struct TokenizeState {
+    remaining_lines: VecDeque<String>,
+    remaining_chars: VecDeque<char>,
     in_quote: Option<char>,
     comment_single: bool,
     comment_multi: usize,
@@ -190,5 +195,39 @@ impl TokenizeState {
             return false;
         }
         last.unwrap().value().ends_with(chars)
+    }
+
+    pub fn next_line(&mut self) -> Option<String> {
+        if let Some(line) = self.remaining_lines.pop_front() {
+            self.remaining_chars = line.chars().collect();
+            Some(line)
+        } else {
+            None
+        }
+    }
+
+    pub fn next_line_peek(&self) -> Option<&String> {
+        self.remaining_lines.front()
+    }
+
+    pub fn next_char(&mut self) -> Option<char> {
+        self.remaining_chars.pop_front()
+    }
+
+    pub fn next_char_peek(&self) -> Option<&char> {
+        self.remaining_chars.front()
+    }
+
+    pub fn remaining_chars(&self) -> &VecDeque<char> {
+        &self.remaining_chars
+    }
+
+    pub fn remaining_lines(&self) -> &VecDeque<String> {
+        &self.remaining_lines
+    }
+
+    pub fn set_lines(&mut self, lines: &[String]) {
+        let lines = condense_lines(lines);
+        self.remaining_lines = lines.into();
     }
 }

@@ -1,30 +1,28 @@
 use log::{error, trace};
 
-use crate::{
-    dm_preprocessor::lib::DmPreProcessor, tokens::token_action::TokenAction,
-    util::condense_lines::condense_lines,
-};
+use crate::{dm_preprocessor::lib::DmPreProcessor, tokens::token_action::TokenAction};
 
 use super::{determine_token_action::determine_token_action, dm_token::DmToken};
 
 impl DmPreProcessor {
-    pub fn tokenize(&mut self, lines: &[impl Into<String> + Clone]) -> Vec<DmToken> {
-        let condensed_lines: Vec<String> = condense_lines(lines);
-        // let condensed_lines = condense_braces(&condensed_lines);
+    pub fn tokenize(&mut self) -> Vec<DmToken> {
         let mut tokens: Vec<DmToken> = vec![];
 
-        for line in condensed_lines {
+        loop {
+            let line = self.tokenize_state.next_line();
+            if line.is_none() {
+                break;
+            }
+
+            let line = line.unwrap().clone();
             let mut token = String::new();
             self.tokenize_state.set_in_preprocessor(false);
             self.tokenize_state.set_comment_single(false);
 
-            trace!("Tokenizing line: `{}`", line);
-            let mut chars = line.chars().peekable();
-            while let Some(char) = chars.next() {
+            while let Some(char) = self.tokenize_state.next_char() {
                 trace!("Char: `{}`", char.escape_debug());
 
-                let next_action =
-                    determine_token_action(&mut self.tokenize_state, char, &token, &mut chars);
+                let next_action = determine_token_action(&mut self.tokenize_state, char, &token);
                 match next_action {
                     TokenAction::StartNewToken => {
                         if !token.is_empty() {
@@ -45,9 +43,6 @@ impl DmPreProcessor {
                             self.tokenize_state.add_line_token(token);
                         }
                         self.tokenize_state.add_line_token(char.to_string());
-                        token = String::new();
-                    }
-                    TokenAction::DropToken => {
                         token = String::new();
                     }
                     _ => {
