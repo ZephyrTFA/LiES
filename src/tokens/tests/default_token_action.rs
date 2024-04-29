@@ -2,8 +2,8 @@
 mod tests {
     use crate::tokens::{
         constants::{SYM_MATH, SYM_OTHR, SYM_QUTE},
-        parse_character::defaults::handle_defaults,
         token_action::TokenAction,
+        tokenize::defaults::handle_defaults,
     };
 
     #[test]

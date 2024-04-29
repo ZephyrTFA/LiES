@@ -1,9 +1,7 @@
 mod constants;
 pub mod dm_token;
-mod get_token_action;
-mod parse_character;
-mod start_tokenize;
 mod token_action;
+mod tokenize;
 
 #[cfg(test)]
 mod tests;

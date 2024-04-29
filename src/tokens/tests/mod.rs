@@ -21,6 +21,6 @@ impl DmPreProcessor {
     pub fn test_tokenize(&mut self, lines: &[&str]) -> Vec<DmToken> {
         let lines: Vec<String> = lines.iter().map(|line| line.to_string()).collect();
         self.tokenize_state.set_lines(&lines);
-        self.start_tokenize()
+        self.start_tokenizing()
     }
 }

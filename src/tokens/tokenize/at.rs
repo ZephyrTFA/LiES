@@ -1,6 +1,6 @@
 use crate::{dm_preprocessor::tokenize_state::TokenizeState, tokens::token_action::TokenAction};
 
-pub fn handle_at(state: &mut TokenizeState, current_token: &str) -> TokenAction {
+pub fn handle_at(state: &mut TokenizeState) -> TokenAction {
     if state.in_comment_any() {
         return TokenAction::None;
     }
@@ -9,16 +9,10 @@ pub fn handle_at(state: &mut TokenizeState, current_token: &str) -> TokenAction 
         return TokenAction::None;
     }
 
-    get_string_special_escape_action('@', current_token, state)
+    get_string_special_escape_action(state)
 }
 
-fn get_string_special_escape_action(
-    char: char,
-    _current_token: &str,
-    state: &mut TokenizeState,
-) -> TokenAction {
-    assert_eq!(char, '@');
-
+fn get_string_special_escape_action(state: &mut TokenizeState) -> TokenAction {
     let mut next_char = state.next_char().expect("Unexpected end of line after '@'");
     if next_char == '{' {
         state.set_multiline_string(true);
