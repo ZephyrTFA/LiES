@@ -1,4 +1,5 @@
 use std::{
+    env,
     ffi::OsStr,
     path::{Path, PathBuf},
 };
@@ -10,11 +11,32 @@ use log::warn;
 
 use crate::{dm_preprocessor::lib::DmPreProcessor, util::dm_file::DmFile};
 
+enum ParseLogMode {
+    None,
+    Directory,
+    File,
+}
+
+impl std::str::FromStr for ParseLogMode {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "none" => Ok(Self::None),
+            "directory" | "dir" => Ok(Self::Directory),
+            "file" => Ok(Self::File),
+            _ => Err(format!("Unknown PARSE_LOG_MODE `{}`", s)),
+        }
+    }
+}
+
 pub struct DmParser {
     preprocessor: DmPreProcessor,
     /// The order in which files were included. Uses a relative path from the environment directory.
     _include_order: Vec<PathBuf>,
     environment_directory: PathBuf,
+    parse_log_mode: ParseLogMode,
+    parse_last_dir: PathBuf,
     environment_traversal: Vec<PathBuf>,
 }
 
@@ -30,6 +52,11 @@ impl DmParser {
             _include_order: vec![],
             environment_directory,
             environment_traversal: vec![],
+            parse_log_mode: env::var("LIES_PARSE_LOG_MODE")
+                .unwrap_or_else(|_| "none".into())
+                .parse()
+                .expect("failed to parse LIES_PARSE_LOG_MODE"),
+            parse_last_dir: ".".into(),
         }
     }
 
@@ -60,9 +87,27 @@ impl DmParser {
             .expect("failed to canonicalize wanted path");
 
         let actual_path = self.convert_canonical_path_to_relative(&wanted_path);
-        info!("Parsing `{}`", actual_path.display());
-        trace!("Actual path: {}", actual_path.display());
 
+        // announce each directory we enter if the depth is lower than the set depth
+        match self.parse_log_mode {
+            ParseLogMode::Directory => {
+                let current_dir = actual_path.parent().unwrap();
+                if current_dir != self.parse_last_dir {
+                    let name = current_dir.display().to_string();
+                    info!(
+                        "Parsing Directory: {}",
+                        if name.is_empty() { "." } else { &name }
+                    );
+                    self.parse_last_dir = current_dir.into();
+                }
+            }
+            ParseLogMode::File => {
+                info!("Parsing File: `{}`", actual_path.display());
+            }
+            ParseLogMode::None => {}
+        }
+
+        trace!("Actual path: {}", actual_path.display());
         if let Some(parent) = actual_path.parent() {
             self.environment_traversal.push(parent.into());
         } else {

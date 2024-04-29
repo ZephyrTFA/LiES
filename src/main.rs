@@ -16,6 +16,12 @@ pub fn main() -> Result<(), String> {
 
     info!("LiES -- Init");
 
+    let mut stopwatch = stopwatch::Stopwatch::start_new();
+
     let mut parser = DmParser::new(WORK_DIR);
-    parser.load("tgstation.dme")
+    parser.load("tgstation.dme")?;
+
+    stopwatch.stop();
+    info!("LiES -- Done in {:.3}s", stopwatch.elapsed().as_secs_f32());
+    Ok(())
 }
