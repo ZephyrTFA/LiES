@@ -22,13 +22,13 @@ pub fn main() -> Result<(), String> {
     info!("LiES -- Init");
 
     let mut parser = DmParser::new(WORK_DIR);
-    // parser.load("tgstation.dme")
-    parser.load(get_test_case())
+    parser.load("tgstation.dme")
+    // parser.load(get_test_case())
 }
 
 fn get_test_case() -> PathBuf {
     let test_case: Vec<&str> = vec![
-        "var/regex/admin_ranks_regex = new(@\"^Name\\s*=\\s*(.+?)\\s*\\n+Include\\s*=\\s*([\\l @]*?)\\s*\\n+Exclude\\s*=\\s*([\\l @]*?)\\s*\\n+Edit\\s*=\\s*([\\l @]*?)\\s*\\n*$\", \"gm\")"
+        "lua_reference_regex = regex(@\"^((function)|(table)|(thread)|(userdata)): 0x[0-9a-fA-F]+$\")"
     ];
 
     let test_case_file = Path::new(&WORK_DIR).join("test_case.dm");

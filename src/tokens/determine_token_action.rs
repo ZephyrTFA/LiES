@@ -5,7 +5,8 @@ use crate::{
 
 use super::{
     default_token_action::get_default_token_action,
-    string_special_escape::get_string_special_escape_action, token_action::TokenAction,
+    string_special_escape::{get_string_special_escape_action, handle_string_special_escape},
+    token_action::TokenAction,
 };
 
 // Non default token actions
@@ -14,6 +15,10 @@ pub fn determine_token_action(
     char: char,
     current_token: &str,
 ) -> TokenAction {
+    if state.in_string_special_escape() {
+        return handle_string_special_escape(state, char);
+    }
+
     if let Some(quote_char) = state.in_quote() {
         if char == *quote_char && count_backslashes(current_token) % 2 == 0 {
             if state.multiline_string() {
@@ -29,7 +34,6 @@ pub fn determine_token_action(
                     && count_backslashes(current_token) % 2 == 0 =>
                 {
                     state.increment_string_interop_count();
-                    state.set_in_quote(None);
                     TokenAction::IsolateToken
                 }
                 '}' if state.multiline_string() && current_token.ends_with(*quote_char) => {
@@ -52,7 +56,6 @@ pub fn determine_token_action(
                 state.decrement_unmatched_brackets();
             } else if state.in_string_interop() {
                 state.decrement_string_interop_count();
-                state.set_in_quote(Some('"'));
             }
             TokenAction::IsolateToken
         }

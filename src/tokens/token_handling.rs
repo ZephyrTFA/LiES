@@ -8,13 +8,7 @@ impl DmPreProcessor {
     pub fn tokenize(&mut self) -> Vec<DmToken> {
         let mut tokens: Vec<DmToken> = vec![];
 
-        loop {
-            let line = self.tokenize_state.next_line();
-            if line.is_none() {
-                break;
-            }
-
-            let line = line.unwrap().clone();
+        while self.tokenize_state.next_line() {
             let mut token = String::new();
             self.tokenize_state.set_in_preprocessor(false);
             self.tokenize_state.set_comment_single(false);
@@ -67,7 +61,7 @@ impl DmPreProcessor {
                 error!(
                     "Unterminated quote `{}` in line `{}`",
                     self.tokenize_state.in_quote().unwrap(),
-                    line
+                    self.tokenize_state.current_line()
                 );
                 panic!();
             }

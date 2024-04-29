@@ -9,9 +9,11 @@ use crate::{
 
 #[derive(Debug, Default)]
 pub struct TokenizeState {
+    current_line: String,
     remaining_lines: VecDeque<String>,
     remaining_chars: VecDeque<char>,
     in_quote: Option<char>,
+    in_string_special_escape: bool,
     comment_single: bool,
     comment_multi: usize,
     in_preprocessor: bool,
@@ -20,7 +22,7 @@ pub struct TokenizeState {
     unmatched_brackets: Vec<usize>,
     string_literal: bool,
     multiline_string: bool,
-    string_interop_buckets: VecDeque<(bool, bool)>,
+    string_interop_buckets: VecDeque<(bool, bool, Option<char>)>,
 }
 
 impl TokenizeState {
@@ -82,10 +84,14 @@ impl TokenizeState {
     pub fn increment_string_interop_count(&mut self) {
         self.unmatched_brackets.push(0);
         self.string_interop_count += 1;
-        self.string_interop_buckets
-            .push_front((self.multiline_string, self.string_literal));
+        self.string_interop_buckets.push_front((
+            self.multiline_string,
+            self.string_literal,
+            self.in_quote,
+        ));
         self.multiline_string = false;
         self.string_literal = false;
+        self.in_quote = None;
         trace!(
             "Incrementing string interop count to {}",
             self.string_interop_count
@@ -97,9 +103,11 @@ impl TokenizeState {
             panic!("Unmatched brackets in string interop");
         }
         self.string_interop_count -= 1;
-        let (multiline_string, string_literal) = self.string_interop_buckets.pop_front().unwrap();
+        let (multiline_string, string_literal, in_quote) =
+            self.string_interop_buckets.pop_front().unwrap();
         self.multiline_string = multiline_string;
         self.string_literal = string_literal;
+        self.in_quote = in_quote;
         trace!(
             "Decrementing string interop count to {}",
             self.string_interop_count
@@ -139,6 +147,19 @@ impl TokenizeState {
             trace!("Setting quote to {:?}", quote);
         }
         self.in_quote = quote;
+    }
+
+    pub fn set_in_string_special_escape(&mut self, in_string_special_escape: bool) {
+        if in_string_special_escape {
+            trace!("Setting in string special escape to true");
+        } else {
+            trace!("Setting in string special escape to false");
+        }
+        self.in_string_special_escape = in_string_special_escape;
+    }
+
+    pub fn in_string_special_escape(&self) -> bool {
+        self.in_string_special_escape
     }
 
     pub fn set_in_preprocessor(&mut self, in_preprocessor: bool) {
@@ -197,17 +218,18 @@ impl TokenizeState {
         last.unwrap().value().ends_with(chars)
     }
 
-    pub fn next_line(&mut self) -> Option<String> {
+    pub fn next_line(&mut self) -> bool {
         if let Some(line) = self.remaining_lines.pop_front() {
             self.remaining_chars = line.chars().collect();
-            Some(line)
+            self.current_line = line;
+            true
         } else {
-            None
+            false
         }
     }
 
-    pub fn next_line_peek(&self) -> Option<&String> {
-        self.remaining_lines.front()
+    pub fn current_line(&self) -> &String {
+        &self.current_line
     }
 
     pub fn next_char(&mut self) -> Option<char> {
