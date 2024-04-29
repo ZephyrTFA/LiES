@@ -87,7 +87,7 @@ impl DmPreProcessor {
             match next_action {
                 TokenAction::StartNewToken => {
                     if !token.is_empty() {
-                        self.tokenize_state.add_line_token(token.clone());
+                        self.tokenize_state.add_line_token(token);
                     }
                     token = char.to_string();
                 }
@@ -96,12 +96,12 @@ impl DmPreProcessor {
                 }
                 TokenAction::EndToken => {
                     token.push(char);
-                    self.tokenize_state.add_line_token(token.clone());
+                    self.tokenize_state.add_line_token(token);
                     token = String::new();
                 }
                 TokenAction::IsolateToken => {
                     if !token.is_empty() {
-                        self.tokenize_state.add_line_token(token.clone());
+                        self.tokenize_state.add_line_token(token);
                     }
                     self.tokenize_state.add_line_token(char.to_string());
                     token = String::new();
