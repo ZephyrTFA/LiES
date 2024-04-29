@@ -42,6 +42,6 @@ fn test_tokenize_preprocess_unmatched_quotes() {
         DmToken::from("\n"),
     ];
 
-    let result = preprocesser.tokenize(&lines);
+    let result = preprocesser.test_tokenize(&lines);
     assert_eq!(result, expected);
 }

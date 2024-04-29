@@ -89,6 +89,6 @@ fn test_hard_lines() {
         DmToken::from("\n"),
     ];
 
-    let result = preprocesser.tokenize(&lines);
+    let result = preprocesser.test_tokenize(&lines);
     assert_eq!(result, expected);
 }

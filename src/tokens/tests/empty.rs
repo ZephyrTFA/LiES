@@ -6,7 +6,7 @@ fn test_tokenize_empty() {
 
     let lines: Vec<&str> = vec![];
     let expected = vec![];
-    let result = preprocessor.tokenize(&lines);
+    let result = preprocessor.test_tokenize(&lines);
 
     assert_eq!(result, expected);
 }

@@ -1,8 +1,3 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
-
 use dm_parser::lib::DmParser;
 use dotenv::dotenv;
 use log::info;

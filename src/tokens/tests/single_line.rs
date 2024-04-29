@@ -18,7 +18,7 @@ fn test_tokenize_single_line() {
         DmToken::from("\n"),
     ];
 
-    let result = preprocessor.tokenize(&lines);
+    let result = preprocessor.test_tokenize(&lines);
 
     assert_eq!(result, expected);
 }
