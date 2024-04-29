@@ -3,12 +3,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use dm_parser::DmParser;
+use dm_parser::lib::DmParser;
 use dotenv::dotenv;
 use log::info;
 
 pub mod dm_parser;
 pub mod dm_preprocessor;
+pub mod tokens;
 pub mod util;
 
 const WORK_DIR: &str = "D:/ss13/tgstation";

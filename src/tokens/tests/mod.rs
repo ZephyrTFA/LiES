@@ -2,6 +2,7 @@ mod comment;
 mod comment_multiline;
 mod comment_multiline_bad;
 mod condense;
+mod default_token_action;
 mod empty;
 mod hard_lines;
 mod interop_nested;

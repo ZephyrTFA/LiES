@@ -2,10 +2,7 @@ use std::collections::VecDeque;
 
 use log::{error, trace};
 
-use crate::{
-    dm_preprocessor::{token_handling::DmToken, DmPreProcessor},
-    util::ParseError,
-};
+use crate::{dm_preprocessor::lib::DmPreProcessor, tokens::dm_token::DmToken, util::ParseError};
 
 impl DmPreProcessor {
     // parentheses are last because we only resolve them when all the ops inside of them are resolved

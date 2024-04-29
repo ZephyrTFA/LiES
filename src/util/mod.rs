@@ -2,12 +2,9 @@ use std::fmt::{Display, Formatter};
 
 pub mod condense_brackets;
 pub mod condense_lines;
-pub mod define_definition;
-pub mod determine_token_action;
 pub mod dm_file;
 pub mod exit_codes;
 pub mod log;
-pub mod start_new_token;
 pub mod whitespace_char;
 
 #[derive(Debug)]

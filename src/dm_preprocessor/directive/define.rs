@@ -1,9 +1,8 @@
-use log::{error, warn};
+use log::error;
 
 use crate::{
-    dm_preprocessor::{
-        define_definition::DmDefineDefinition, token_handling::DmToken, DmPreProcessor,
-    },
+    dm_preprocessor::{define_definition::DmDefineDefinition, lib::DmPreProcessor},
+    tokens::dm_token::DmToken,
     util::ParseError,
 };
 

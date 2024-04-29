@@ -1,6 +1,6 @@
 #[test]
 fn test_quote_interior() {
-    use crate::dm_preprocessor::{DmPreProcessor, DmToken};
+    use crate::{dm_preprocessor::lib::DmPreProcessor, tokens::dm_token::DmToken};
 
     let mut preprocesser = DmPreProcessor::new();
     let lines = vec!["\"THIS IS A QUOTE\""];
