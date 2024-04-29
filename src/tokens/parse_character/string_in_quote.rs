@@ -1,6 +1,7 @@
-use crate::{dm_preprocessor::tokenize_state::TokenizeState, util::count_backslashes};
-
-use super::token_action::TokenAction;
+use crate::{
+    dm_preprocessor::tokenize_state::TokenizeState, tokens::token_action::TokenAction,
+    util::count_backslashes,
+};
 
 pub fn handle_string_in_quote(
     state: &mut TokenizeState,
