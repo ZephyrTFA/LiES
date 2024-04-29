@@ -50,7 +50,6 @@ impl DmParser {
             return Ok(());
         }
 
-        info!("Parsing `{}`", wanted_path.display());
         let load_from = self
             .environment_directory
             .join(self.preprocessor.get_base_file_dir());
@@ -61,6 +60,7 @@ impl DmParser {
             .expect("failed to canonicalize wanted path");
 
         let actual_path = self.convert_canonical_path_to_relative(&wanted_path);
+        info!("Parsing `{}`", actual_path.display());
         trace!("Actual path: {}", actual_path.display());
 
         if let Some(parent) = actual_path.parent() {
