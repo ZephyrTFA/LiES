@@ -10,8 +10,7 @@ pub enum TokenAction {
     EndToken,
     /// Isolate the current character into its own token.
     IsolateToken,
-    /// Ignore the current character.
-    #[allow(dead_code)]
+    /// Skip to default behavior.
     None,
 }
 

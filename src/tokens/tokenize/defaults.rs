@@ -1,10 +1,10 @@
-use super::{
+use crate::tokens::{
     constants::{SYM_MATH, SYM_OTHR, SYM_QUTE},
     token_action::TokenAction,
 };
 
-// Determines if a new token should be started based on the current character and the current token.
-pub fn get_default_token_action(char: char, current_token: &str) -> TokenAction {
+// Standard token handling for most characters
+pub fn handle_defaults(char: char, current_token: &str) -> TokenAction {
     // special case for quotes, they should always be isolated
     if SYM_QUTE.contains(&char) {
         return TokenAction::IsolateToken;

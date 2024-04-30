@@ -14,7 +14,7 @@ use super::lib::DmPreProcessor;
 impl DmPreProcessor {
     pub fn preprocess(&mut self, file: &DmFile) -> Vec<DmToken> {
         self.tokenize_state.set_lines(file.lines());
-        let mut tokens = self.tokenize();
+        let mut tokens = self.start_tokenizing();
         let mut skip_until_regex: Option<Regex> = None;
 
         let mut in_quote: Option<char> = None;
