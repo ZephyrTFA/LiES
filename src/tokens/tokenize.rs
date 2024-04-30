@@ -5,19 +5,19 @@ use log::{error, trace};
 mod at;
 mod close_bracket;
 pub mod defaults;
+mod forward_slash;
 mod hash;
 mod open_bracket;
 mod quotes;
-mod slash;
 mod star;
 
 use at::handle_at;
 use close_bracket::handle_close_bracket;
 use defaults::handle_defaults;
+use forward_slash::handle_forward_slash;
 use hash::handle_hash;
 use open_bracket::handle_open_bracket;
 use quotes::handle_quotes;
-use slash::handle_slash;
 use star::handle_star;
 
 use crate::{
@@ -135,7 +135,7 @@ impl DmPreProcessor {
             '"' | '\'' => handle_quotes(&mut self.tokenize_state, char, current_token),
             '#' => handle_hash(&mut self.tokenize_state),
             '*' => handle_star(&mut self.tokenize_state, current_token),
-            '/' => handle_slash(&mut self.tokenize_state, current_token),
+            '/' => handle_forward_slash(&mut self.tokenize_state, current_token),
             '@' => handle_at(&mut self.tokenize_state),
             _ => handle_defaults(char, current_token),
         };

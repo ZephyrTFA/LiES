@@ -14,7 +14,7 @@ pub fn handle_quotes(state: &mut TokenizeState, char: char, current_token: &str)
     }
 
     state.set_in_quote(Some(char));
-    state.set_string_literal(current_token.ends_with(&['@']));
+    state.set_string_literal(current_token.ends_with('@'));
     state.set_multiline_string(current_token.ends_with('{'));
     TokenAction::IsolateToken
 }
