@@ -1,4 +1,5 @@
-use log::error;
+#[warn(unused_imports)]
+use log::{error, warn};
 
 use crate::{
     dm_preprocessor::{define_definition::DmDefineDefinition, lib::DmPreProcessor},

@@ -1,13 +1,12 @@
 use dm_parser::lib::DmParser;
 use dotenv::dotenv;
 use log::info;
+use std::env;
 
 pub mod dm_parser;
 pub mod dm_preprocessor;
 pub mod tokens;
 pub mod util;
-
-const WORK_DIR: &str = "D:/ss13/tgstation";
 
 pub fn main() -> Result<(), String> {
     dotenv().ok();
@@ -18,7 +17,9 @@ pub fn main() -> Result<(), String> {
 
     let mut stopwatch = stopwatch::Stopwatch::start_new();
 
-    let mut parser = DmParser::new(WORK_DIR);
+    let game_dir = env::var("GAME_DIR").unwrap();
+
+    let mut parser = DmParser::new(game_dir);
     parser.load("tgstation.dme")?;
 
     stopwatch.stop();

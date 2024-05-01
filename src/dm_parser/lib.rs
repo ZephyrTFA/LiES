@@ -80,9 +80,24 @@ impl DmParser {
         let load_from = self
             .environment_directory
             .join(self.preprocessor.get_base_file_dir());
-        let wanted_path = load_from
-            .join(current_traversal)
-            .join(wanted_path)
+        let wanted_path = load_from.join(current_traversal).join(wanted_path);
+
+        let wanted_path_str = wanted_path.to_str().unwrap();
+        // Unix / docker fix
+        let wanted_path_str_fixed = if cfg!(unix) {
+            wanted_path_str.replace('\\', "/")
+        } else {
+            wanted_path_str.to_string()
+        };
+        let wanted_path = PathBuf::from(wanted_path_str_fixed);
+
+        if !wanted_path.exists() {
+            return Err(format!(
+                "File or directory does not exist: {}",
+                wanted_path.display()
+            ));
+        }
+        let wanted_path = wanted_path
             .canonicalize()
             .expect("failed to canonicalize wanted path");
 

@@ -171,8 +171,8 @@ impl DmPreProcessor {
             }
         }
 
-        #[cfg(not(debug_assertions))]
-        warn!("macros are not yet implemented, '{macro_definition:#?}' args {args:#?}");
+        // #[cfg(not(debug_assertions))]
+        // warn!("macros are not yet implemented, '{macro_definition:#?}' args {args:#?}");
         None
     }
 
