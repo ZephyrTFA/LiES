@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use log::{debug, error, info, warn};
+use log::{debug, error};
 
 #[cfg(test)]
 use once_cell::sync::Lazy;
@@ -134,7 +134,6 @@ impl DmPreProcessor {
 
     fn do_macro_replacement(
         macro_definition: &DmDefineDefinition,
-        token: DmToken,
         tokens: &mut VecDeque<DmToken>,
     ) -> Result<Option<DmToken>, ParseError> {
         if tokens.is_empty() || tokens.pop_front().unwrap().value() != "(" {
@@ -192,7 +191,54 @@ impl DmPreProcessor {
                 .collect();
             final_args.insert(arg_names.last().unwrap().to_string(), last_arg);
         }
-        Ok(Some(token))
+
+        let mut replacement_tokens = macro_definition.body().to_vec();
+        let mut new_tokens = VecDeque::new();
+        while !replacement_tokens.is_empty() {
+            let token = replacement_tokens.remove(0);
+            match token.value() {
+                "##" => {
+                    let name = replacement_tokens.remove(0);
+                    let name = name.value();
+                    if !final_args.contains_key(name) {
+                        if param_info.last_arg_is_catch_all()
+                            && param_info.args().last() == Some(&format!("{}...", name))
+                        {
+                            continue;
+                        }
+                        error!("`##` operator used on undefined argument `{}`", name);
+                        return Err(ParseError::ERROR_MACRO_MALFORMED_CALL);
+                    }
+                    let arg = final_args.get(name).unwrap();
+                    new_tokens.extend(arg.clone());
+                }
+                "#" => {
+                    let name = replacement_tokens.remove(0);
+                    let name = name.value();
+                    if !final_args.contains_key(name) {
+                        error!("`#` operator used on undefined argument `{}`", name);
+                        return Err(ParseError::ERROR_MACRO_MALFORMED_CALL);
+                    }
+                    let arg = final_args.get(name).unwrap();
+                    new_tokens.push_back(DmToken::from("\""));
+                    new_tokens.extend(arg.clone());
+                    new_tokens.push_back(DmToken::from("\""));
+                }
+                token if final_args.contains_key(token) => {
+                    let arg = final_args.get(token).unwrap();
+                    new_tokens.extend(arg.clone());
+                }
+                _ => {
+                    new_tokens.push_back(token);
+                }
+            }
+        }
+
+        for token in new_tokens.into_iter().rev() {
+            tokens.push_front(token);
+        }
+
+        Ok(None)
     }
 
     /// Prefer do_define_replacement wherever possible to not ignore defines as they get added.
@@ -243,7 +289,7 @@ impl DmPreProcessor {
         let define = define.unwrap();
         if define.is_macro() {
             debug!("macro `{}`", define.name());
-            return Self::do_macro_replacement(define, token, next_tokens);
+            return Self::do_macro_replacement(define, next_tokens);
         }
 
         let mut tokens = define.body().to_vec();
