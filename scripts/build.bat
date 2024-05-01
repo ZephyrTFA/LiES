@@ -29,10 +29,8 @@ if errorlevel 1 (
     echo Starting docker...
     color
     docker run --tty --name LiES -e GAME_DIR=/usr/src/ss13 -v %GAME_DIR%:/usr/src/ss13 -p 4000:80 lies
-) else (
-    echo Restarting docker...
-    docker restart LiES >nul
-    echo Running LiES...
-    color
-    docker exec --tty LiES /bin/sh -c "./start.sh"
+    exit /b 0
 )
+
+echo Restarting docker...
+docker restart LiES >nul
