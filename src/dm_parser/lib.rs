@@ -67,12 +67,14 @@ impl DmParser {
     }
 
     pub fn load(&mut self, file: impl Into<PathBuf>) -> Result<(), String> {
-        let current_traversal = match self.environment_traversal.last() {
-            Some(traversal) => traversal.clone(),
-            None => ".".into(),
-        };
+        let current_traversal = self
+            .environment_traversal
+            .last()
+            .cloned()
+            .unwrap_or_else(|| ".".into());
 
         let wanted_path = file.into();
+
         if wanted_path.extension() == Some(OsStr::new("dmm")) {
             return Ok(());
         }
@@ -80,9 +82,13 @@ impl DmParser {
         let load_from = self
             .environment_directory
             .join(self.preprocessor.get_base_file_dir());
+
         let wanted_path = load_from.join(current_traversal).join(wanted_path);
 
-        let wanted_path_str = wanted_path.to_str().unwrap();
+        let wanted_path_str = wanted_path
+            .to_str()
+            .ok_or_else(|| "Failed to convert path to string".to_string())?;
+
         // Unix / docker fix
         let wanted_path_str_fixed = if cfg!(unix) {
             wanted_path_str.replace('\\', "/")
@@ -99,7 +105,7 @@ impl DmParser {
         }
         let wanted_path = wanted_path
             .canonicalize()
-            .expect("failed to canonicalize wanted path");
+            .map_err(|_| "Failed to canonicalize the wanted path".to_string())?;
 
         let actual_path = self.convert_canonical_path_to_relative(&wanted_path);
 
