@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum TokenAction {
     /// Start a new token with the current character.
     StartNewToken,
@@ -14,6 +14,8 @@ pub enum TokenAction {
     None,
     /// Drop the token.
     DropToken,
+    /// Continue the current token because we are in a comment, but drop the token when we are done.
+    DelayTokenDrop,
 }
 
 impl Display for TokenAction {
@@ -25,6 +27,7 @@ impl Display for TokenAction {
             TokenAction::IsolateToken => write!(f, "IsolateToken"),
             TokenAction::None => write!(f, "None"),
             TokenAction::DropToken => write!(f, "DropToken"),
+            TokenAction::DelayTokenDrop => write!(f, "DelayTokenDrop"),
         }
     }
 }

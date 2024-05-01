@@ -85,11 +85,16 @@ impl DmPreProcessor {
     /// Returns the next token in the current line.
     fn get_token(&mut self) -> String {
         let mut token = String::new();
+        let mut last_action = TokenAction::None;
 
         while let Some(char) = self.tokenize_state.next_char() {
             trace!("Char: `{}`", char.escape_debug());
 
             let next_action = self.get_token_action(char, &token);
+            if last_action == TokenAction::DelayTokenDrop && next_action != last_action {
+                token = String::new();
+            }
+            last_action = next_action;
 
             match next_action {
                 TokenAction::StartNewToken => {
@@ -117,9 +122,15 @@ impl DmPreProcessor {
                     token = String::new();
                 }
                 TokenAction::None => {}
+                TokenAction::DelayTokenDrop => {
+                    token.push(char);
+                }
             }
         }
 
+        if last_action == TokenAction::DelayTokenDrop {
+            token = String::new();
+        }
         token
     }
 
@@ -234,18 +245,14 @@ impl DmPreProcessor {
             '*' => {
                 if current_token.ends_with('/') {
                     self.tokenize_state.increment_comment_multi();
-                    TokenAction::DropToken
-                } else {
-                    TokenAction::ContinueToken
                 }
+                TokenAction::DelayTokenDrop
             }
             '/' => {
                 if current_token.ends_with('*') {
                     self.tokenize_state.decrement_comment_multi();
-                    TokenAction::DropToken
-                } else {
-                    TokenAction::ContinueToken
                 }
+                TokenAction::DelayTokenDrop
             }
             _ => TokenAction::DropToken,
         }
