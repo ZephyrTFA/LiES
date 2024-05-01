@@ -21,18 +21,8 @@ if not defined GAME_DIR (
 @REM Blue color
 color 01
 
-docker images --format "{{.Repository}}" | findstr /r "^lies$" >nul
-if errorlevel 1 (
-    echo Building docker image with volume directory: %GAME_DIR%
-    docker build -q -t lies .
-) else (
-    for /f "delims=" %%i in ('docker inspect -f "{{.Created}}" lies') do set imageDate=%%i
-    for /f "delims=" %%i in ('dir /T:W /4 Dockerfile') do set fileDate=%%i
-    if "%fileDate%" gtr "%imageDate%" (
-        echo Dockerfile is newer than image, rebuilding...
-        docker build -q -t lies .
-    )
-)
+echo Building docker image with volume directory: %GAME_DIR%
+docker build -q -t lies .
 
 docker ps -a --filter "name=LiES" | findstr /v "CONTAINER ID" >nul
 if errorlevel 1 (
