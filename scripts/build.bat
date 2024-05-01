@@ -25,12 +25,11 @@ echo Building docker image with volume directory: %GAME_DIR%
 docker build -q -t lies .
 
 docker ps -a --filter "name=LiES" | findstr /v "CONTAINER ID" >nul
-if errorlevel 1 (
-    echo Starting docker...
-    color
-    docker run --tty --name LiES -e GAME_DIR=/usr/src/ss13 -v %GAME_DIR%:/usr/src/ss13 -p 4000:80 lies
-    exit /b 0
+if errorlevel 0 (
+    echo Removing old container...
+    docker rm -f LiES
 )
 
-echo Restarting docker...
-docker start -a LiES
+echo Starting docker...
+color
+docker run --rm --tty --name LiES -e GAME_DIR=/usr/src/ss13 -v %GAME_DIR%:/usr/src/ss13 -p 4000:80 lies
