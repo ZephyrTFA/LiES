@@ -3,12 +3,15 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use log::{debug, error};
+use log::debug;
 
 #[cfg(test)]
 use once_cell::sync::Lazy;
 
-use crate::{tokens::dm_token::DmToken, util::count_backslashes};
+use crate::{
+    tokens::dm_token::DmToken,
+    util::{count_backslashes, ParseError},
+};
 
 use super::{define_definition::DmDefineDefinition, tokenize_state::TokenizeState};
 
@@ -135,10 +138,9 @@ impl DmPreProcessor {
     fn do_macro_replacement(
         _macro_definition: &DmDefineDefinition,
         tokens: &mut VecDeque<DmToken>,
-    ) -> Option<DmToken> {
+    ) -> Result<Option<DmToken>, ParseError> {
         if tokens.is_empty() || tokens.pop_front().unwrap().value != "(" {
-            error!("malformed macro call");
-            panic!();
+            return Err(ParseError::ERROR_MACRO_MALFORMED_CALL);
         }
 
         let mut args: Vec<Vec<DmToken>> = vec![vec![]];
@@ -171,7 +173,7 @@ impl DmPreProcessor {
             }
         }
 
-        None
+        Ok(None)
     }
 
     /// Prefer do_define_replacement wherever possible to not ignore defines as they get added.
@@ -181,7 +183,7 @@ impl DmPreProcessor {
         &self,
         tokens: &mut VecDeque<DmToken>,
         in_preprocessoer_directive: bool,
-    ) {
+    ) -> Result<(), ParseError> {
         let mut return_tokens = vec![];
 
         while !tokens.is_empty() {
@@ -196,7 +198,7 @@ impl DmPreProcessor {
                     continue;
                 }
                 _ => {
-                    token = self.do_define_replacement(token.unwrap(), tokens);
+                    token = self.do_define_replacement(token.unwrap(), tokens)?;
                 }
             };
 
@@ -206,16 +208,17 @@ impl DmPreProcessor {
         }
 
         tokens.extend(return_tokens);
+        Ok(())
     }
 
     pub fn do_define_replacement(
         &self,
         token: DmToken,
         next_tokens: &mut VecDeque<DmToken>,
-    ) -> Option<DmToken> {
+    ) -> Result<Option<DmToken>, ParseError> {
         let define = self.get_define(token.value());
         if define.is_none() {
-            return Some(token);
+            return Ok(Some(token));
         }
 
         let define = define.unwrap();
@@ -225,7 +228,7 @@ impl DmPreProcessor {
 
         let mut tokens = define.body().to_vec();
         if tokens.is_empty() {
-            return None;
+            return Ok(None);
         }
 
         let token = tokens.remove(0);
@@ -233,6 +236,6 @@ impl DmPreProcessor {
         for token in tokens.into_iter().rev() {
             next_tokens.push_front(token);
         }
-        Some(token)
+        Ok(Some(token))
     }
 }

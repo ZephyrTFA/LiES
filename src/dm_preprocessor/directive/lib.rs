@@ -30,7 +30,7 @@ impl DmPreProcessor {
             effective_args.push_back(arg.clone());
         }
 
-        self.replace_all_defines_possible(&mut effective_args, true);
+        self.replace_all_defines_possible(&mut effective_args, true)?;
         while !effective_args.is_empty() {
             if effective_args
                 .front()

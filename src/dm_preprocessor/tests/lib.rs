@@ -45,7 +45,7 @@ fn test_define_replacement() {
     while !tokens.is_empty() {
         let token = tokens.pop_front().unwrap();
         let token = preprocess.do_define_replacement(token, &mut tokens);
-        if let Some(token) = token {
+        if let Ok(Some(token)) = token {
             output.push(token);
         }
     }

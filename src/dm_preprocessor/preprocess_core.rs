@@ -6,13 +6,13 @@ use regex::Regex;
 
 use crate::{
     tokens::dm_token::DmToken,
-    util::{dm_file::DmFile, exit_codes::ERROR_CODE_PATTERN_NOT_FOUND},
+    util::{dm_file::DmFile, exit_codes::ERROR_CODE_PATTERN_NOT_FOUND, ParseError},
 };
 
 use super::lib::DmPreProcessor;
 
 impl DmPreProcessor {
-    pub fn preprocess(&mut self, file: &DmFile) -> Vec<DmToken> {
+    pub fn preprocess(&mut self, file: &DmFile) -> Result<Vec<DmToken>, ParseError> {
         self.tokenize_state.set_lines(file.lines());
         let mut tokens: VecDeque<DmToken> = self.start_tokenizing().into();
         let mut skip_until_regex: Option<Regex> = None;
@@ -28,6 +28,7 @@ impl DmPreProcessor {
             let token = tokens.pop_front().unwrap();
             let token = if in_quote.is_none() {
                 self.do_define_replacement(token, &mut tokens)
+                    .map_err(|err| err.with_file_path(file.path().display().to_string()))?
             } else {
                 Some(token)
             };
@@ -81,15 +82,8 @@ impl DmPreProcessor {
                     }
                 }
 
-                match self.handle_directive(directive, &args) {
-                    Ok(()) => {}
-                    Err(code) => {
-                        error!(
-                            "PreProcessor Error ({code}): {directive} with the following args: {args:#?}"
-                        );
-                        panic!();
-                    }
-                }
+                self.handle_directive(directive, &args)
+                    .map_err(|err| err.with_file_path(file.path().to_string_lossy().to_string()))?;
                 continue;
             }
 
@@ -105,7 +99,7 @@ impl DmPreProcessor {
             final_tokens.push(DmToken::new(token.to_owned()));
         }
 
-        final_tokens
+        Ok(final_tokens)
     }
 
     fn take_until_match(tokens: &mut VecDeque<DmToken>, pattern: &str) -> Vec<DmToken> {

@@ -6,10 +6,10 @@ use std::{
 
 use log::{debug, error, info, trace};
 
-#[cfg(not(debug_assertions))]
-use log::warn;
-
-use crate::{dm_preprocessor::lib::DmPreProcessor, util::dm_file::DmFile};
+use crate::{
+    dm_preprocessor::lib::DmPreProcessor,
+    util::{dm_file::DmFile, ParseError},
+};
 
 enum ParseLogMode {
     None,
@@ -66,7 +66,7 @@ impl DmParser {
             .to_path_buf()
     }
 
-    pub fn load(&mut self, file: impl Into<PathBuf>) -> Result<(), String> {
+    pub fn load(&mut self, file: impl Into<PathBuf>) -> Result<(), ParseError> {
         let current_traversal = self
             .environment_traversal
             .last()
@@ -85,9 +85,10 @@ impl DmParser {
 
         let wanted_path = load_from.join(current_traversal).join(wanted_path);
 
-        let wanted_path_str = wanted_path
-            .to_str()
-            .ok_or_else(|| "Failed to convert path to string".to_string())?;
+        let wanted_path_str = wanted_path.to_str().ok_or(
+            ParseError::DM_FILE_LOAD_FAILURE
+                .with_file_path(wanted_path.to_string_lossy().to_string()),
+        )?;
 
         // Unix / docker fix
         let wanted_path_str_fixed = if cfg!(unix) {
@@ -95,17 +96,14 @@ impl DmParser {
         } else {
             wanted_path_str.to_string()
         };
-        let wanted_path = PathBuf::from(wanted_path_str_fixed);
+        let wanted_path = PathBuf::from(&wanted_path_str_fixed);
 
         if !wanted_path.exists() {
-            return Err(format!(
-                "File or directory does not exist: {}",
-                wanted_path.display()
-            ));
+            return Err(ParseError::DM_FILE_LOAD_FAILURE.with_file_path(wanted_path_str_fixed));
         }
-        let wanted_path = wanted_path
-            .canonicalize()
-            .map_err(|_| "Failed to canonicalize the wanted path".to_string())?;
+        let wanted_path = wanted_path.canonicalize().map_err(|_| {
+            ParseError::PATH_CANONICALIZE_FAIL.with_file_path(wanted_path_str_fixed)
+        })?;
 
         let actual_path = self.convert_canonical_path_to_relative(&wanted_path);
 
@@ -158,9 +156,9 @@ impl DmParser {
         result
     }
 
-    fn parse_file(&mut self, file: impl Into<PathBuf>) -> Result<(), String> {
+    fn parse_file(&mut self, file: impl Into<PathBuf>) -> Result<(), ParseError> {
         let file = DmFile::new(&self.environment_directory, file.into())?;
-        let tokens = self.preprocessor.preprocess(&file);
+        let tokens = self.preprocessor.preprocess(&file)?;
         for _token in tokens {}
         Ok(())
     }

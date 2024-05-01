@@ -1,14 +1,17 @@
 use std::path::{Path, PathBuf};
 
+use super::ParseError;
+
 pub struct DmFile {
     path: PathBuf,
     lines: Vec<String>,
 }
 
 impl DmFile {
-    pub fn new(environment_directory: &Path, path: impl Into<PathBuf>) -> Result<Self, String> {
+    pub fn new(environment_directory: &Path, path: impl Into<PathBuf>) -> Result<Self, ParseError> {
         let path = path.into();
-        let lines = Self::load_lines(&environment_directory.join(&path))?;
+        let lines = Self::load_lines(&environment_directory.join(&path))
+            .map_err(|_| ParseError::DM_FILE_LOAD_FAILURE)?;
         Ok(Self { path, lines })
     }
 

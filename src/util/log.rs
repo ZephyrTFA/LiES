@@ -157,10 +157,6 @@ impl Log for InternalLogger {
             log_stdout.write_all(b"\n").unwrap();
             log_stdout.flush().unwrap();
         }
-
-        if record.level() == Level::Error {
-            panic!("Encountered error level log message: \"{}\"", record_body);
-        }
     }
 
     fn flush(&self) {
