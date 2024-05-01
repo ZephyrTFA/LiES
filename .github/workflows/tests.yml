@@ -19,6 +19,22 @@ jobs:
           command: test
           args: --all --verbose
 
+  run_tgstation:
+    name: "Parse TGStation"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          repository: "tgstation/tgstation"
+          ref: "master"
+      - name: "Setup Rust"
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: "Run"
+        run: cargo run --release
+
   clippy:
     name: "Lints"
     runs-on: ubuntu-latest
