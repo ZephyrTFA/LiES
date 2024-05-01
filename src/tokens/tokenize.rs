@@ -63,6 +63,13 @@ impl DmPreProcessor {
             error!("Unmatched brackets in file `{}`", path.display());
             panic!();
         }
+        if self.tokenize_state.in_comment_multi() {
+            error!(
+                "Unterminated multi-line comment in file `{}`",
+                path.display()
+            );
+            panic!();
+        }
         if self.tokenize_state.in_string_interop() {
             error!("Unmatched string interop in file `{}`", path.display());
             panic!();
@@ -229,7 +236,7 @@ impl DmPreProcessor {
                     self.tokenize_state.increment_comment_multi();
                     TokenAction::DropToken
                 } else {
-                    TokenAction::None
+                    TokenAction::ContinueToken
                 }
             }
             '/' => {
@@ -237,10 +244,10 @@ impl DmPreProcessor {
                     self.tokenize_state.decrement_comment_multi();
                     TokenAction::DropToken
                 } else {
-                    TokenAction::None
+                    TokenAction::ContinueToken
                 }
             }
-            _ => TokenAction::None,
+            _ => TokenAction::DropToken,
         }
     }
 }

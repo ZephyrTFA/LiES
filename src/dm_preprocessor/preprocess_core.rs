@@ -1,7 +1,6 @@
 use std::collections::VecDeque;
 
 use log::{debug, error};
-use regex::Regex;
 
 use crate::{
     tokens::dm_token::DmToken,
@@ -14,7 +13,6 @@ impl DmPreProcessor {
     pub fn preprocess(&mut self, file: &DmFile) -> Result<Vec<DmToken>, ParseError> {
         self.tokenize_state.set_lines(file.lines());
         let mut tokens: VecDeque<DmToken> = self.start_tokenizing().into();
-        let mut skip_until_regex: Option<Regex> = None;
 
         let mut in_quote: Option<char> = None;
 
@@ -39,13 +37,6 @@ impl DmPreProcessor {
             let token = token.unwrap();
 
             let token = token.value();
-
-            if let Some(until_token) = &skip_until_regex {
-                if until_token.is_match(token) {
-                    skip_until_regex = None;
-                }
-                continue;
-            }
 
             if in_quote.is_none() && token == "#" {
                 let directive = tokens.pop_front().unwrap();
@@ -82,7 +73,7 @@ impl DmPreProcessor {
                 continue;
             }
 
-            final_tokens.push(DmToken::new(token.to_owned()));
+            final_tokens.push(DmToken::new(token.to_owned()).with_is_in_string(in_quote.is_some()));
         }
 
         Ok(final_tokens)

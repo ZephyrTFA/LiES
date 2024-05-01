@@ -2,9 +2,10 @@ use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub struct DmToken {
-    pub value: String,
-    pub line: Option<usize>,
-    pub column: Option<usize>,
+    value: String,
+    is_in_string: bool,
+    line: Option<usize>,
+    column: Option<usize>,
 }
 
 impl Display for DmToken {
@@ -17,9 +18,15 @@ impl DmToken {
     pub fn new(value: String) -> Self {
         Self {
             value,
+            is_in_string: false,
             line: None,
             column: None,
         }
+    }
+
+    pub fn with_is_in_string(mut self, is_in_string: bool) -> Self {
+        self.is_in_string = is_in_string;
+        self
     }
 
     pub fn value(&self) -> &str {
@@ -32,6 +39,10 @@ impl DmToken {
 
     pub fn set_column(&mut self, column: usize) {
         self.column = Some(column);
+    }
+
+    pub fn is_in_string(&self) -> bool {
+        self.is_in_string
     }
 }
 

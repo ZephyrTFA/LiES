@@ -3,15 +3,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use log::debug;
+use log::{debug, error, info, warn};
 
 #[cfg(test)]
 use once_cell::sync::Lazy;
 
-use crate::{
-    tokens::dm_token::DmToken,
-    util::{count_backslashes, ParseError},
-};
+use crate::{tokens::dm_token::DmToken, util::ParseError};
 
 use super::{define_definition::DmDefineDefinition, tokenize_state::TokenizeState};
 
@@ -136,44 +133,66 @@ impl DmPreProcessor {
     }
 
     fn do_macro_replacement(
-        _macro_definition: &DmDefineDefinition,
+        macro_definition: &DmDefineDefinition,
+        token: DmToken,
         tokens: &mut VecDeque<DmToken>,
     ) -> Result<Option<DmToken>, ParseError> {
-        if tokens.is_empty() || tokens.pop_front().unwrap().value != "(" {
+        if tokens.is_empty() || tokens.pop_front().unwrap().value() != "(" {
+            error!("Expected `(` after macro call");
             return Err(ParseError::ERROR_MACRO_MALFORMED_CALL);
         }
 
-        let mut args: Vec<Vec<DmToken>> = vec![vec![]];
+        let param_info = macro_definition.macro_param_info();
+
+        let mut raw_args = vec![];
+        let mut arg_split_points = vec![];
         let mut paren_count = 1;
         while !tokens.is_empty() {
-            let token = tokens.pop_front().unwrap();
-            let current_args = args.last_mut().unwrap();
-            match token.value() {
-                ")" if !current_args
-                    .last()
-                    .is_some_and(|tok| count_backslashes(tok.value()) % 2 == 0) =>
-                {
-                    paren_count -= 1;
-                    if paren_count == 0 {
-                        break;
-                    }
-                }
-                "(" if !current_args
-                    .last()
-                    .is_some_and(|tok| count_backslashes(tok.value()) % 2 == 0) =>
-                {
-                    paren_count += 1;
-                }
-                "," if paren_count == 1 => {
-                    args.push(vec![]);
-                }
-                _ => {
-                    current_args.push(token);
-                }
+            let token = tokens.pop_front();
+            if token.is_none() {
+                return Err(ParseError::ERROR_MACRO_MALFORMED_CALL);
             }
+            let token = token.unwrap();
+            if token.value() == ")" && !token.is_in_string() {
+                paren_count -= 1;
+                if paren_count == 0 {
+                    break;
+                }
+            } else if token.value() == "(" && !token.is_in_string() {
+                paren_count += 1;
+            } else if token.value() == "," && paren_count == 1 && !token.is_in_string() {
+                arg_split_points.push(raw_args.len());
+                continue;
+            } else if token.value() == " " && paren_count == 1 && !token.is_in_string() {
+                continue;
+            }
+            raw_args.push(token);
         }
 
-        Ok(None)
+        let mut args = vec![];
+        for split_point in arg_split_points.iter().rev() {
+            let arg = raw_args.split_off(*split_point);
+            args.push(arg);
+        }
+        args.push(raw_args);
+        args.reverse();
+
+        let mut final_args = HashMap::new();
+        let arg_names = param_info.args();
+
+        for (arg_name, arg) in arg_names.iter().zip(args.iter()) {
+            final_args.insert(arg_name.to_string(), arg.clone());
+        }
+        if param_info.last_arg_is_catch_all() {
+            let last_arg = args
+                .iter()
+                .skip(arg_names.len() - 1)
+                .flatten()
+                .cloned()
+                .collect();
+            final_args.insert(arg_names.last().unwrap().to_string(), last_arg);
+        }
+        Ok(Some(token))
     }
 
     /// Prefer do_define_replacement wherever possible to not ignore defines as they get added.
@@ -224,7 +243,7 @@ impl DmPreProcessor {
         let define = define.unwrap();
         if define.is_macro() {
             debug!("macro `{}`", define.name());
-            return Self::do_macro_replacement(define, next_tokens);
+            return Self::do_macro_replacement(define, token, next_tokens);
         }
 
         let mut tokens = define.body().to_vec();

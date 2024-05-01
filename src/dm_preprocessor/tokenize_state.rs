@@ -179,7 +179,7 @@ impl TokenizeState {
 
     pub fn add_line_token(&mut self, token: impl Into<DmToken>) {
         let token = token.into();
-        trace!("Token: '{}'", token.value.escape_debug());
+        trace!("Token: '{}'", token.value().escape_debug());
         self.line_tokens.push(token);
     }
 

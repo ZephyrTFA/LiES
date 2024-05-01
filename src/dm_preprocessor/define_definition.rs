@@ -4,7 +4,36 @@ use crate::tokens::dm_token::DmToken;
 pub struct DmDefineDefinition {
     name: String,
     body: Vec<DmToken>,
-    macro_args: Option<Vec<String>>,
+    macro_param_info: Option<MacroParamInfo>,
+}
+
+#[derive(Debug, Clone)]
+pub struct MacroParamInfo {
+    args: Vec<String>,
+    arg_count: usize,
+    last_arg_is_catch_all: bool,
+}
+
+impl MacroParamInfo {
+    pub fn new(args: Vec<String>, arg_count: usize, last_arg_is_catch_all: bool) -> Self {
+        Self {
+            args,
+            arg_count,
+            last_arg_is_catch_all,
+        }
+    }
+
+    pub fn args(&self) -> &Vec<String> {
+        &self.args
+    }
+
+    pub fn arg_count(&self) -> usize {
+        self.arg_count
+    }
+
+    pub fn last_arg_is_catch_all(&self) -> bool {
+        self.last_arg_is_catch_all
+    }
 }
 
 impl DmDefineDefinition {
@@ -17,18 +46,18 @@ impl DmDefineDefinition {
     }
 
     pub fn is_macro(&self) -> bool {
-        self.macro_args.is_some()
+        self.macro_param_info.is_some()
     }
 
-    pub fn macro_args(&self) -> &[String] {
-        self.macro_args.as_ref().unwrap()
+    pub fn macro_param_info(&self) -> &MacroParamInfo {
+        self.macro_param_info.as_ref().unwrap()
     }
 
     pub fn new_flag(name: &str) -> Self {
         Self {
             name: name.into(),
             body: vec![],
-            macro_args: None,
+            macro_param_info: None,
         }
     }
 
@@ -36,15 +65,15 @@ impl DmDefineDefinition {
         Self {
             name: name.into(),
             body: body.to_owned(),
-            macro_args: None,
+            macro_param_info: None,
         }
     }
 
-    pub fn new_macro(name: &str, body: Vec<DmToken>, macro_args: Vec<String>) -> Self {
+    pub fn new_macro(name: &str, body: Vec<DmToken>, macro_args: MacroParamInfo) -> Self {
         Self {
             name: name.into(),
             body,
-            macro_args: Some(macro_args),
+            macro_param_info: Some(macro_args),
         }
     }
 }

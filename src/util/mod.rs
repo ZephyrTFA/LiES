@@ -60,6 +60,26 @@ impl ParseError {
         file_path: None,
         line_number: None,
     };
+    pub const ERROR_MACRO_MALFORMED_ARGUMENTS: ParseError = ParseError {
+        error_code: 9,
+        file_path: None,
+        line_number: None,
+    };
+    pub const ERROR_MACRO_TOO_MANY_ARGS: ParseError = ParseError {
+        error_code: 10,
+        file_path: None,
+        line_number: None,
+    };
+    pub const ERROR_MACRO_TOO_FEW_ARGS: ParseError = ParseError {
+        error_code: 11,
+        file_path: None,
+        line_number: None,
+    };
+    pub const INTERNAL_ERROR: ParseError = ParseError {
+        error_code: 0,
+        file_path: None,
+        line_number: None,
+    };
 }
 
 impl ParseError {
@@ -107,6 +127,7 @@ impl ParseError {
 impl Display for ParseError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let fail_reason = match self.error_code {
+            0 => "Internal error",
             1 => "Failed to parse directive",
             2 => "Forced error",
             3 => "Macro body is empty",
@@ -115,6 +136,9 @@ impl Display for ParseError {
             6 => "Macro call is malformed",
             7 => "Failed to load DM file",
             8 => "Failed to canonicalize path",
+            9 => "Macro arguments are malformed",
+            10 => "Macro has too many arguments",
+            11 => "Macro has too few arguments",
             _ => "Unknown error",
         };
         write!(f, "{}", fail_reason)
