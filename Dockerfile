@@ -4,4 +4,4 @@ COPY . .
 RUN cargo install --path .
 ENV LIES_PARSE_LOG_MODE=FILE
 EXPOSE 80
-CMD ["cargo", "run"]
+CMD ["cargo", "run", "--release"]
