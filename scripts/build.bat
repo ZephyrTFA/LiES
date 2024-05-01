@@ -33,3 +33,6 @@ if errorlevel 0 (
 echo Starting docker...
 color
 docker run --rm --tty --name LiES -e GAME_DIR=/usr/src/ss13 -v %GAME_DIR%:/usr/src/ss13 -p 4000:80 lies
+
+echo Cleaning up docker images...
+docker image prune -f >nul
