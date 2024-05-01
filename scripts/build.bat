@@ -33,4 +33,4 @@ if errorlevel 1 (
 )
 
 echo Restarting docker...
-docker restart LiES >nul
+docker start -a LiES
