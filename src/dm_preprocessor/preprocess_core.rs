@@ -1,12 +1,11 @@
-use std::{collections::VecDeque, process::exit};
+use std::collections::VecDeque;
 
-use log::error;
-use once_cell::sync::Lazy;
+use log::{debug, error};
 use regex::Regex;
 
 use crate::{
     tokens::dm_token::DmToken,
-    util::{dm_file::DmFile, exit_codes::ERROR_CODE_PATTERN_NOT_FOUND, ParseError},
+    util::{dm_file::DmFile, ParseError},
 };
 
 use super::lib::DmPreProcessor;
@@ -26,6 +25,7 @@ impl DmPreProcessor {
             }
 
             let token = tokens.pop_front().unwrap();
+            debug!("Token: {}", token.value().escape_debug());
             let token = if in_quote.is_none() {
                 self.do_define_replacement(token, &mut tokens)
                     .map_err(|err| err.with_file_path(file.path().display().to_string()))?
@@ -44,20 +44,6 @@ impl DmPreProcessor {
                 if until_token.is_match(token) {
                     skip_until_regex = None;
                 }
-                continue;
-            }
-
-            if token.starts_with("//") {
-                Self::take_until_match(&mut tokens, "\n");
-                continue;
-            }
-
-            static MULTI_LINE_COMMENT_START: Lazy<Regex> =
-                Lazy::new(|| Regex::new(r"/+\*+").unwrap());
-            static MULTI_LINE_COMMENT_END: Lazy<Regex> =
-                Lazy::new(|| Regex::new(r"\*+/+").unwrap());
-            if MULTI_LINE_COMMENT_START.is_match(token) && !MULTI_LINE_COMMENT_END.is_match(token) {
-                Self::take_until_regex(&mut tokens, &MULTI_LINE_COMMENT_END);
                 continue;
             }
 
@@ -102,16 +88,6 @@ impl DmPreProcessor {
         Ok(final_tokens)
     }
 
-    fn take_until_match(tokens: &mut VecDeque<DmToken>, pattern: &str) -> Vec<DmToken> {
-        match Self::take_until(tokens, |token| token.value() == pattern) {
-            Some(tokens) => tokens,
-            None => {
-                error!("Failed to find pattern `{}`", pattern);
-                panic!();
-            }
-        }
-    }
-
     fn take_until_match_any(tokens: &mut VecDeque<DmToken>, patterns: &[&str]) -> Vec<DmToken> {
         match Self::take_until(tokens, |token| patterns.contains(&token.value())) {
             Some(tokens) => tokens,
@@ -121,20 +97,6 @@ impl DmPreProcessor {
             }
         }
     }
-
-    fn take_until_regex(tokens: &mut VecDeque<DmToken>, pattern: &Regex) -> Vec<DmToken> {
-        match Self::take_until(tokens, |token| pattern.is_match(token.value())) {
-            Some(tokens) => tokens,
-            None => {
-                error!(
-                    "Failed to find regex pattern `{}` with remaining: `{:#?}`",
-                    pattern, tokens
-                );
-                exit(ERROR_CODE_PATTERN_NOT_FOUND);
-            }
-        }
-    }
-
     fn take_until(
         tokens: &mut VecDeque<DmToken>,
         check: impl Fn(&DmToken) -> bool,

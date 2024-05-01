@@ -5,7 +5,7 @@ pub fn handle_forward_slash(state: &mut TokenizeState, current_token: &str) -> T
         return match current_token.chars().next_back() {
             Some('*') => {
                 state.decrement_comment_multi();
-                TokenAction::EndToken
+                TokenAction::DropToken
             }
             _ => TokenAction::None,
         };
@@ -18,7 +18,7 @@ pub fn handle_forward_slash(state: &mut TokenizeState, current_token: &str) -> T
     match current_token.chars().next_back() {
         Some('/') => {
             state.set_comment_single(true);
-            TokenAction::EndToken
+            TokenAction::DropToken
         }
         _ => TokenAction::None,
     }

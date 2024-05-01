@@ -106,13 +106,10 @@ impl DmPreProcessor {
                     self.tokenize_state.add_line_token(char.to_string());
                     token = String::new();
                 }
-                _ => {
-                    error!(
-                        "Unexpected token action `{}` with char {}",
-                        next_action, char
-                    );
-                    panic!();
+                TokenAction::DropToken => {
+                    token = String::new();
                 }
+                TokenAction::None => {}
             }
         }
 
@@ -127,6 +124,14 @@ impl DmPreProcessor {
 
         if let Some(quote_char) = self.tokenize_state.in_quote() {
             return self.handle_string_in_quote(char, *quote_char, current_token);
+        }
+
+        if self.tokenize_state.in_comment_single() {
+            return TokenAction::None; // single comments always override multi-line comment markers
+        }
+
+        if self.tokenize_state.in_comment_multi() {
+            return self.handle_comment_multi(char, current_token);
         }
 
         let mut token_result = match char {
@@ -215,5 +220,27 @@ impl DmPreProcessor {
         }
 
         TokenAction::IsolateToken
+    }
+
+    fn handle_comment_multi(&mut self, char: char, current_token: &str) -> TokenAction {
+        match char {
+            '*' => {
+                if current_token.ends_with('/') {
+                    self.tokenize_state.increment_comment_multi();
+                    TokenAction::DropToken
+                } else {
+                    TokenAction::None
+                }
+            }
+            '/' => {
+                if current_token.ends_with('*') {
+                    self.tokenize_state.decrement_comment_multi();
+                    TokenAction::DropToken
+                } else {
+                    TokenAction::None
+                }
+            }
+            _ => TokenAction::None,
+        }
     }
 }

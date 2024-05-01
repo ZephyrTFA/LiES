@@ -223,6 +223,7 @@ impl DmPreProcessor {
 
         let define = define.unwrap();
         if define.is_macro() {
+            debug!("macro `{}`", define.name());
             return Self::do_macro_replacement(define, next_tokens);
         }
 

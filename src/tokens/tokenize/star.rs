@@ -9,7 +9,7 @@ pub fn handle_star(state: &mut TokenizeState, current_token: &str) -> TokenActio
         return match current_token.chars().next_back() {
             Some('/') => {
                 state.increment_comment_multi();
-                TokenAction::EndToken
+                TokenAction::DropToken
             }
             _ => TokenAction::None,
         };
@@ -22,7 +22,7 @@ pub fn handle_star(state: &mut TokenizeState, current_token: &str) -> TokenActio
     match current_token.chars().next_back() {
         Some('/') => {
             state.increment_comment_multi();
-            TokenAction::EndToken
+            TokenAction::DropToken
         }
         _ => TokenAction::None,
     }

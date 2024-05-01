@@ -3,6 +3,8 @@ use std::fmt::Display;
 #[derive(Debug, Clone)]
 pub struct DmToken {
     pub value: String,
+    pub line: Option<usize>,
+    pub column: Option<usize>,
 }
 
 impl Display for DmToken {
@@ -13,11 +15,23 @@ impl Display for DmToken {
 
 impl DmToken {
     pub fn new(value: String) -> Self {
-        Self { value }
+        Self {
+            value,
+            line: None,
+            column: None,
+        }
     }
 
     pub fn value(&self) -> &str {
         &self.value
+    }
+
+    pub fn set_line(&mut self, line: usize) {
+        self.line = Some(line);
+    }
+
+    pub fn set_column(&mut self, column: usize) {
+        self.column = Some(column);
     }
 }
 

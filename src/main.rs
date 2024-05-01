@@ -44,4 +44,5 @@ fn lies() -> Result<(), ParseError> {
     let game_dir = env::var("GAME_DIR").unwrap();
     let mut parser = DmParser::new(game_dir);
     parser.load("tgstation.dme")
+    // parser.load(r"code\modules\mob\living\simple_animal\bot\secbot.dm")
 }

@@ -12,6 +12,8 @@ pub enum TokenAction {
     IsolateToken,
     /// Skip to default behavior.
     None,
+    /// Drop the token.
+    DropToken,
 }
 
 impl Display for TokenAction {
@@ -22,6 +24,7 @@ impl Display for TokenAction {
             TokenAction::EndToken => write!(f, "EndToken"),
             TokenAction::IsolateToken => write!(f, "IsolateToken"),
             TokenAction::None => write!(f, "None"),
+            TokenAction::DropToken => write!(f, "DropToken"),
         }
     }
 }
