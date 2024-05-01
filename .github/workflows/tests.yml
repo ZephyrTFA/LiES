@@ -25,15 +25,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-        with:
-          repository: "tgstation/tgstation"
-          ref: "master"
+
       - name: "Setup Rust"
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+
+      - name: "Install"
+        run: cargo install --path ./
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          repository: "tgstation/tgstation"
+          ref: "master"
+          path: "tgstation"
+
       - name: "Run"
-        run: cargo run --release
+        run: lies
 
   clippy:
     name: "Lints"
