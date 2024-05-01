@@ -103,7 +103,6 @@ impl DmParser {
                 wanted_path.display()
             ));
         }
-
         let wanted_path = wanted_path
             .canonicalize()
             .map_err(|_| "Failed to canonicalize the wanted path".to_string())?;
