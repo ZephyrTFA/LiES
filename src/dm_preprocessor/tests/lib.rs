@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use crate::tokens::dm_token::DmToken;
 
 #[test]
@@ -37,11 +39,11 @@ fn test_define_replacement() {
         "test3".into(),
     ];
 
-    let mut tokens = input;
+    let mut tokens: VecDeque<DmToken> = input.into();
     let mut output = vec![];
 
     while !tokens.is_empty() {
-        let token = tokens.remove(0);
+        let token = tokens.pop_front().unwrap();
         let token = preprocess.do_define_replacement(token, &mut tokens);
         if let Some(token) = token {
             output.push(token);

@@ -32,8 +32,6 @@ impl DmPreProcessor {
     }
 
     fn handle_macro(&mut self, _name: &str, _args: &[DmToken]) -> Result<(), ParseError> {
-        #[cfg(not(debug_assertions))]
-        warn!("macros are not implemented yet");
         Ok(())
     }
 }

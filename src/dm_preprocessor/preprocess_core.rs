@@ -1,4 +1,4 @@
-use std::process::exit;
+use std::{collections::VecDeque, process::exit};
 
 use log::error;
 use once_cell::sync::Lazy;
@@ -14,7 +14,7 @@ use super::lib::DmPreProcessor;
 impl DmPreProcessor {
     pub fn preprocess(&mut self, file: &DmFile) -> Vec<DmToken> {
         self.tokenize_state.set_lines(file.lines());
-        let mut tokens = self.start_tokenizing();
+        let mut tokens: VecDeque<DmToken> = self.start_tokenizing().into();
         let mut skip_until_regex: Option<Regex> = None;
 
         let mut in_quote: Option<char> = None;
@@ -25,7 +25,7 @@ impl DmPreProcessor {
                 break;
             }
 
-            let token = tokens.remove(0);
+            let token = tokens.pop_front().unwrap();
             let token = if in_quote.is_none() {
                 self.do_define_replacement(token, &mut tokens)
             } else {
@@ -61,7 +61,7 @@ impl DmPreProcessor {
             }
 
             if in_quote.is_none() && token == "#" {
-                let directive = tokens.remove(0);
+                let directive = tokens.pop_front().unwrap();
                 let directive = directive.value(); // needs to be seperate because of borrow checker
 
                 let mut args = Self::take_until_match_any(&mut tokens, &["\n", "//"]);
@@ -108,7 +108,7 @@ impl DmPreProcessor {
         final_tokens
     }
 
-    fn take_until_match(tokens: &mut Vec<DmToken>, pattern: &str) -> Vec<DmToken> {
+    fn take_until_match(tokens: &mut VecDeque<DmToken>, pattern: &str) -> Vec<DmToken> {
         match Self::take_until(tokens, |token| token.value() == pattern) {
             Some(tokens) => tokens,
             None => {
@@ -118,7 +118,7 @@ impl DmPreProcessor {
         }
     }
 
-    fn take_until_match_any(tokens: &mut Vec<DmToken>, patterns: &[&str]) -> Vec<DmToken> {
+    fn take_until_match_any(tokens: &mut VecDeque<DmToken>, patterns: &[&str]) -> Vec<DmToken> {
         match Self::take_until(tokens, |token| patterns.contains(&token.value())) {
             Some(tokens) => tokens,
             None => {
@@ -128,7 +128,7 @@ impl DmPreProcessor {
         }
     }
 
-    fn take_until_regex(tokens: &mut Vec<DmToken>, pattern: &Regex) -> Vec<DmToken> {
+    fn take_until_regex(tokens: &mut VecDeque<DmToken>, pattern: &Regex) -> Vec<DmToken> {
         match Self::take_until(tokens, |token| pattern.is_match(token.value())) {
             Some(tokens) => tokens,
             None => {
@@ -142,13 +142,13 @@ impl DmPreProcessor {
     }
 
     fn take_until(
-        tokens: &mut Vec<DmToken>,
+        tokens: &mut VecDeque<DmToken>,
         check: impl Fn(&DmToken) -> bool,
     ) -> Option<Vec<DmToken>> {
         let mut final_tokens = vec![];
 
         while !tokens.is_empty() {
-            let token = tokens.remove(0);
+            let token = tokens.pop_front().unwrap();
             if check(&token) {
                 return Some(final_tokens);
             }

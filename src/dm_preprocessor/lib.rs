@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, VecDeque},
     path::{Path, PathBuf},
 };
 
@@ -134,9 +134,9 @@ impl DmPreProcessor {
 
     fn do_macro_replacement(
         _macro_definition: &DmDefineDefinition,
-        tokens: &mut Vec<DmToken>,
+        tokens: &mut VecDeque<DmToken>,
     ) -> Option<DmToken> {
-        if tokens.is_empty() || tokens.remove(0).value() != "(" {
+        if tokens.is_empty() || tokens.pop_front().unwrap().value != "(" {
             error!("malformed macro call");
             panic!();
         }
@@ -144,7 +144,7 @@ impl DmPreProcessor {
         let mut args: Vec<Vec<DmToken>> = vec![vec![]];
         let mut paren_count = 1;
         while !tokens.is_empty() {
-            let token = tokens.remove(0);
+            let token = tokens.pop_front().unwrap();
             let current_args = args.last_mut().unwrap();
             match token.value() {
                 ")" if !current_args
@@ -171,8 +171,6 @@ impl DmPreProcessor {
             }
         }
 
-        // #[cfg(not(debug_assertions))]
-        // warn!("macros are not yet implemented, '{macro_definition:#?}' args {args:#?}");
         None
     }
 
@@ -181,20 +179,20 @@ impl DmPreProcessor {
     /// Such as inside of a macro or preprocessor directive parsing.
     pub fn replace_all_defines_possible(
         &self,
-        tokens: &mut Vec<DmToken>,
+        tokens: &mut VecDeque<DmToken>,
         in_preprocessoer_directive: bool,
     ) {
         let mut return_tokens = vec![];
 
         while !tokens.is_empty() {
-            let mut token = Some(tokens.remove(0));
+            let mut token = Some(tokens.pop_front().unwrap());
 
             match in_preprocessoer_directive {
                 true if token.as_ref().unwrap().value() == "defined" => {
                     return_tokens.push(token.unwrap());
-                    return_tokens.push(tokens.remove(0)); // (
-                    return_tokens.push(tokens.remove(0)); // identifier
-                    return_tokens.push(tokens.remove(0)); // )
+                    return_tokens.push(tokens.pop_front().unwrap()); // (
+                    return_tokens.push(tokens.pop_front().unwrap()); // identifier
+                    return_tokens.push(tokens.pop_front().unwrap()); // )
                     continue;
                 }
                 _ => {
@@ -207,13 +205,13 @@ impl DmPreProcessor {
             }
         }
 
-        *tokens = return_tokens;
+        tokens.extend(return_tokens);
     }
 
     pub fn do_define_replacement(
         &self,
         token: DmToken,
-        next_tokens: &mut Vec<DmToken>,
+        next_tokens: &mut VecDeque<DmToken>,
     ) -> Option<DmToken> {
         let define = self.get_define(token.value());
         if define.is_none() {
@@ -231,7 +229,10 @@ impl DmPreProcessor {
         }
 
         let token = tokens.remove(0);
-        next_tokens.splice(0..0, tokens);
+        next_tokens.reserve(tokens.len());
+        for token in tokens.into_iter().rev() {
+            next_tokens.push_front(token);
+        }
         Some(token)
     }
 }
