@@ -1,6 +1,9 @@
 use std::collections::{HashMap, VecDeque};
 
-use crate::{tokens::dm_token::DmToken, util::dm_file::DmFile};
+use crate::{
+    tokens::dm_token::DmToken,
+    util::{dm_file::DmFile, ParseError},
+};
 
 use super::{
     dm_types::{DmPath, DmProc, DmVar},
@@ -15,9 +18,14 @@ struct ParseState {
 }
 
 impl DmParser {
-    pub fn parse_tokens(&mut self, tokens: VecDeque<DmToken>, _file: DmFile) {
+    pub fn parse_tokens(
+        &mut self,
+        tokens: VecDeque<DmToken>,
+        _file: DmFile,
+    ) -> Result<(), ParseError> {
         let mut state = ParseState::default();
         let _scopes = self.split_into_scopes(&mut state, tokens);
+        Ok(())
     }
 
     fn split_into_scopes(
