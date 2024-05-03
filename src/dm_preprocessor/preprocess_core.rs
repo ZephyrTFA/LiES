@@ -10,13 +10,13 @@ use crate::{
 use super::lib::DmPreProcessor;
 
 impl DmPreProcessor {
-    pub fn preprocess(&mut self, file: &DmFile) -> Result<Vec<DmToken>, ParseError> {
+    pub fn preprocess(&mut self, file: &DmFile) -> Result<VecDeque<DmToken>, ParseError> {
         self.tokenize_state.set_lines(file.lines());
         let mut tokens: VecDeque<DmToken> = self.start_tokenizing().into();
 
         let mut in_quote: Option<char> = None;
 
-        let mut final_tokens: Vec<DmToken> = vec![];
+        let mut final_tokens: VecDeque<DmToken> = VecDeque::new();
         loop {
             if tokens.is_empty() {
                 break;
@@ -73,7 +73,8 @@ impl DmPreProcessor {
                 continue;
             }
 
-            final_tokens.push(DmToken::new(token.to_owned()).with_is_in_string(in_quote.is_some()));
+            final_tokens
+                .push_back(DmToken::new(token.to_owned()).with_is_in_string(in_quote.is_some()));
         }
 
         Ok(final_tokens)

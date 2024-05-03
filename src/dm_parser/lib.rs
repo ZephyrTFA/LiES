@@ -159,7 +159,7 @@ impl DmParser {
     fn parse_file(&mut self, file: impl Into<PathBuf>) -> Result<(), ParseError> {
         let file = DmFile::new(&self.environment_directory, file.into())?;
         let tokens = self.preprocessor.preprocess(&file)?;
-        for _token in tokens {}
+        self.parse_tokens(tokens, file);
         Ok(())
     }
 }
