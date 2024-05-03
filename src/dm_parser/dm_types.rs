@@ -1,22 +1,22 @@
 use std::collections::HashMap;
 
 pub struct DmPath {
-    parent_path: Option<String>,
-    vars: HashMap<String, DmVar>,
-    procs: HashMap<String, DmProc>,
+    _parent_path: Option<String>,
+    _vars: HashMap<String, DmVar>,
+    _procs: HashMap<String, DmProc>,
 }
 
 pub struct DmVar {
-    name: String,
-    default_value: String,
-    value: String,
-    data: Option<String>,
+    _name: String,
+    _default_value: String,
+    _value: String,
+    _data: Option<String>,
 }
 
 pub struct DmProc {
-    name: String,
-    actions: Vec<DmAction>,
-    data: Option<String>,
+    _name: String,
+    _actions: Vec<DmAction>,
+    _data: Option<String>,
 }
 
 pub struct DmAction {}

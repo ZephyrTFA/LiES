@@ -25,6 +25,7 @@ impl DmParser {
         _state: &mut ParseState,
         mut _tokens: VecDeque<DmToken>,
     ) -> VecDeque<VecDeque<DmToken>> {
-        unimplemented!()
+        // TODO
+        VecDeque::new()
     }
 }
