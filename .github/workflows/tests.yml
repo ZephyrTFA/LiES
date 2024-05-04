@@ -45,8 +45,37 @@ jobs:
         run: lies
         env:
           GAME_DIR: ./tgstation
+										DME_FILE: tgstation.dme
 
-  clippy:
+		run_paradise:
+    name: "Parse Paradise"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: "Setup Rust"
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: "Install"
+        run: cargo install --path ./
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          repository: "ParadiseSS13/Paradise"
+          ref: "master"
+          path: "paradise"
+
+      - name: "Run"
+        run: lies
+        env:
+          GAME_DIR: ./paradise
+										DME_FILE: paradise.dme
+
+		clippy:
     name: "Lints"
     runs-on: ubuntu-latest
     steps:
