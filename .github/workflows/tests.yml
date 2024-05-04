@@ -45,9 +45,9 @@ jobs:
         run: lies
         env:
           GAME_DIR: ./tgstation
-										DME_FILE: tgstation.dme
+          DME_FILE: tgstation.dme
 
-		run_paradise:
+  run_paradise:
     name: "Parse Paradise"
     runs-on: ubuntu-latest
     steps:
@@ -73,9 +73,9 @@ jobs:
         run: lies
         env:
           GAME_DIR: ./paradise
-										DME_FILE: paradise.dme
+          DME_FILE: paradise.dme
 
-		clippy:
+  clippy:
     name: "Lints"
     runs-on: ubuntu-latest
     steps:
