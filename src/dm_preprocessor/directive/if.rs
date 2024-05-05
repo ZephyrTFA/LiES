@@ -102,6 +102,7 @@ impl DmPreProcessor {
                                 });
                                 did_something = true;
                             }
+                        }
                         "!=" => {
                             if token_index + 1 >= current_run.len() || token_index < 1 {
                                 error!("Malformed preprocessor if directive: {:#?}", current_run);
