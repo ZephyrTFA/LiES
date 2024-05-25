@@ -82,6 +82,27 @@ impl DmPreProcessor {
                                 did_something = true;
                             }
                         }
+                        "==" => {
+                            if token_index + 1 >= current_run.len() || token_index < 1 {
+                                error!("Malformed preprocessor if directive: {:#?}", current_run);
+                                return Err(ParseError::ERROR_DIRECTIVE_PARSE);
+                            }
+
+                            let left = current_run[token_index - 1].value();
+                            let right = current_run[token_index + 1].value();
+                            if let (Ok(left), Ok(right)) =
+                                (left.parse::<i32>(), right.parse::<i32>())
+                            {
+                                current_run.remove(token_index);
+                                current_run.remove(token_index);
+                                current_run[token_index - 1] = DmToken::new(if left == right {
+                                    "1".to_string()
+                                } else {
+                                    "0".to_string()
+                                });
+                                did_something = true;
+                            }
+                        }
                         "!=" => {
                             if token_index + 1 >= current_run.len() || token_index < 1 {
                                 error!("Malformed preprocessor if directive: {:#?}", current_run);
