@@ -1,4 +1,4 @@
-use log::debug;
+use log::trace;
 #[warn(unused_imports)]
 use log::{error, warn};
 
@@ -55,7 +55,7 @@ impl DmPreProcessor {
                 continue;
             }
             if arg == "," || arg == " " {
-                debug!("skipping whitespace or comma");
+                trace!("skipping whitespace or comma");
                 continue;
             }
             arg_names.push(arg.to_string());
@@ -71,7 +71,7 @@ impl DmPreProcessor {
 
         // verify all arg names are alphanumeric, except last one which has special behavior
         if arg_names.len() > 1 {
-            debug!("checking arg names");
+            trace!("checking arg names");
             for arg in arg_names.iter().rev().skip(1).rev() {
                 if !is_valid_identifier(arg) {
                     return Err(ParseError::ERROR_MACRO_ARG_NAME_INVALID_CHAR);
@@ -84,7 +84,7 @@ impl DmPreProcessor {
         // verify last arg name is alphanumeric, except for trailing ellipsis
         // note that ellipsis are optional
         if !arg_names.is_empty() {
-            debug!("checking last arg name");
+            trace!("checking last arg name");
             let last_arg = arg_names.last().unwrap();
             if last_arg != "..." {
                 let mut actual_name: &str = last_arg;

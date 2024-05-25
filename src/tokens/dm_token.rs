@@ -70,6 +70,12 @@ impl From<String> for DmToken {
     }
 }
 
+impl From<&String> for DmToken {
+    fn from(value: &String) -> Self {
+        Self::from(value.as_str())
+    }
+}
+
 impl PartialEq for DmToken {
     fn eq(&self, other: &Self) -> bool {
         self.value == other.value

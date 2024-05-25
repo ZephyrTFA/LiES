@@ -1,4 +1,8 @@
+#![allow(dead_code)]
+
 use std::collections::{HashMap, VecDeque};
+
+mod scope;
 
 use crate::{
     tokens::dm_token::DmToken,
@@ -11,29 +15,33 @@ use super::{
 };
 
 #[derive(Default)]
-struct ParseState {
-    _types: HashMap<String, DmPath>,
-    _global_procs: HashMap<String, DmProc>,
-    _global_vars: HashMap<String, DmVar>,
+pub struct ObjectTree {
+    types: HashMap<String, DmPath>,
+    global_procs: HashMap<String, DmProc>,
+    global_vars: HashMap<String, DmVar>,
+}
+
+#[derive(Default)]
+struct Scope {
+    type_path: String,
+    tokens: VecDeque<DmToken>,
 }
 
 impl DmParser {
     pub fn parse_tokens(
         &mut self,
         tokens: VecDeque<DmToken>,
-        _file: DmFile,
-    ) -> Result<(), ParseError> {
-        let mut state = ParseState::default();
-        let _scopes = self.split_into_scopes(&mut state, tokens);
-        Ok(())
+        _file: &DmFile,
+    ) -> Result<ObjectTree, ParseError> {
+        self.generate_object_tree(tokens)
     }
 
-    fn split_into_scopes(
+    fn generate_object_tree(
         &mut self,
-        _state: &mut ParseState,
-        mut _tokens: VecDeque<DmToken>,
-    ) -> VecDeque<VecDeque<DmToken>> {
-        // TODO
-        VecDeque::new()
+        tokens: VecDeque<DmToken>,
+    ) -> Result<ObjectTree, ParseError> {
+        let scopes = self.parse_scopes(tokens);
+        dbg!(&scopes);
+        Ok(ObjectTree::default())
     }
 }

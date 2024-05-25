@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-use ::log::debug;
+use ::log::trace;
 
 pub mod condense_lines;
 pub mod dm_file;
@@ -167,12 +167,12 @@ pub fn is_valid_ident_char_start(c: char) -> bool {
 
 pub fn is_valid_identifier(string: &str) -> bool {
     if string.is_empty() {
-        debug!("Empty identifier");
+        trace!("Empty identifier");
         return false;
     }
     let mut chars = string.chars();
     if !is_valid_ident_char_start(chars.next().unwrap()) {
-        debug!(
+        trace!(
             "Invalid identifier start character: {}",
             string.chars().next().unwrap()
         );
@@ -180,7 +180,7 @@ pub fn is_valid_identifier(string: &str) -> bool {
     }
     for c in chars {
         if !is_valid_ident_char(c) {
-            debug!("Invalid identifier character: {}", c);
+            trace!("Invalid identifier character: {}", c);
             return false;
         }
     }

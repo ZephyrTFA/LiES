@@ -17,6 +17,12 @@ enum ParseLogMode {
     File,
 }
 
+impl Default for ParseLogMode {
+    fn default() -> Self {
+        Self::None // byond default
+    }
+}
+
 impl std::str::FromStr for ParseLogMode {
     type Err = String;
 
@@ -38,6 +44,12 @@ pub struct DmParser {
     parse_log_mode: ParseLogMode,
     parse_last_dir: PathBuf,
     environment_traversal: Vec<PathBuf>,
+}
+
+impl Default for DmParser {
+    fn default() -> Self {
+        Self::new(".")
+    }
 }
 
 impl DmParser {
@@ -159,6 +171,7 @@ impl DmParser {
     fn parse_file(&mut self, file: impl Into<PathBuf>) -> Result<(), ParseError> {
         let file = DmFile::new(&self.environment_directory, file.into())?;
         let tokens = self.preprocessor.preprocess(&file)?;
-        self.parse_tokens(tokens, file)
+        self.parse_tokens(tokens, &file)?;
+        Ok(())
     }
 }

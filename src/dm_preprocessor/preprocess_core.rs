@@ -26,7 +26,9 @@ impl DmPreProcessor {
             debug!("Token: {}", token.value().escape_debug());
             let token = if in_quote.is_none() {
                 self.do_define_replacement(token, &mut tokens)
-                    .map_err(|err| err.with_file_path(file.path().display().to_string()))?
+                    .map_err(|err| {
+                        err.with_file_path(self.get_current_file().display().to_string())
+                    })?
             } else {
                 Some(token)
             };
@@ -59,8 +61,9 @@ impl DmPreProcessor {
                     }
                 }
 
-                self.handle_directive(directive, &args)
-                    .map_err(|err| err.with_file_path(file.path().to_string_lossy().to_string()))?;
+                self.handle_directive(directive, &args).map_err(|err| {
+                    err.with_file_path(self.get_current_file().display().to_string())
+                })?;
                 continue;
             }
 
