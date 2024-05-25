@@ -183,7 +183,7 @@ impl DmPreProcessor {
             }
 
             self.tokenize_state.set_in_quote(None);
-            TokenAction::StartNewToken
+            TokenAction::IsolateToken
         } else {
             match char {
                 '[' if self.tokenize_state.in_quote() == Some(&'"')

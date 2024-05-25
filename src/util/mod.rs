@@ -21,6 +21,12 @@ pub struct ParseError {
 impl Error for ParseError {}
 
 impl ParseError {
+    pub const INTERNAL_ERROR: ParseError = ParseError {
+        error_code: 0,
+        file_path: None,
+        line_number: None,
+    };
+
     pub const ERROR_DIRECTIVE_PARSE: ParseError = ParseError {
         error_code: 1,
         file_path: None,
@@ -80,8 +86,8 @@ impl ParseError {
         file_path: None,
         line_number: None,
     };
-    pub const INTERNAL_ERROR: ParseError = ParseError {
-        error_code: 0,
+    pub const MISMATCHED_INDENTATION_COUNT: ParseError = ParseError {
+        error_code: 12,
         file_path: None,
         line_number: None,
     };

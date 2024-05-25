@@ -23,6 +23,8 @@ pub struct TokenizeState {
     string_literal: bool,
     multiline_string: bool,
     string_interop_buckets: VecDeque<(bool, bool, Option<char>)>,
+    token_is_in_string: bool,
+    next_token_is_in_string: bool,
 }
 
 impl TokenizeState {
@@ -180,7 +182,14 @@ impl TokenizeState {
     pub fn add_line_token(&mut self, token: impl Into<DmToken>) {
         let token = token.into();
         trace!("Token: '{}'", token.value().escape_debug());
-        self.line_tokens.push(token);
+        println!(
+            "adding token: {} - {} - {:?}",
+            token.value().escape_debug(),
+            self.token_is_in_string,
+            self.in_quote()
+        );
+        self.line_tokens
+            .push(token.with_is_in_string(self.token_is_in_string));
     }
 
     pub fn set_comment_single(&mut self, comment_single: bool) {
@@ -251,5 +260,23 @@ impl TokenizeState {
     pub fn set_lines(&mut self, lines: &[String]) {
         let lines = condense_lines(lines);
         self.remaining_lines = lines.into();
+    }
+
+    pub fn set_token_is_in_string(&mut self, token_is_in_string: bool) {
+        if token_is_in_string != self.token_is_in_string {
+            trace!("Setting token is in string to true");
+        } else {
+            trace!("Setting token is in string to false");
+        }
+        self.token_is_in_string = token_is_in_string;
+    }
+
+    pub fn set_next_token_is_in_string(&mut self, next_token_is_in_string: bool) {
+        if next_token_is_in_string != self.next_token_is_in_string {
+            trace!("Setting next token is in string to true");
+        } else {
+            trace!("Setting next token is in string to false");
+        }
+        self.next_token_is_in_string = next_token_is_in_string;
     }
 }

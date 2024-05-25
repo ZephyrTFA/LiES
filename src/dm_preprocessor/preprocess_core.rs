@@ -13,9 +13,6 @@ impl DmPreProcessor {
     pub fn preprocess(&mut self, file: &DmFile) -> Result<VecDeque<DmToken>, ParseError> {
         self.tokenize_state.set_lines(file.lines());
         let mut tokens: VecDeque<DmToken> = self.start_tokenizing().into();
-
-        let mut in_quote: Option<char> = None;
-
         let mut final_tokens: VecDeque<DmToken> = VecDeque::new();
         loop {
             if tokens.is_empty() {
@@ -24,7 +21,7 @@ impl DmPreProcessor {
 
             let token = tokens.pop_front().unwrap();
             debug!("Token: {}", token.value().escape_debug());
-            let token = if in_quote.is_none() {
+            let token = if !token.is_in_string() {
                 self.do_define_replacement(token, &mut tokens)
                     .map_err(|err| {
                         err.with_file_path(self.get_current_file().display().to_string())
@@ -38,9 +35,7 @@ impl DmPreProcessor {
             }
             let token = token.unwrap();
 
-            let token = token.value();
-
-            if in_quote.is_none() && token == "#" {
+            if !token.is_in_string() && token.value() == "#" {
                 let directive = tokens.pop_front().unwrap();
                 let directive = directive.value(); // needs to be seperate because of borrow checker
 
@@ -71,13 +66,7 @@ impl DmPreProcessor {
                 continue;
             }
 
-            if token == "\"" || token == "'" {
-                in_quote = Some(token.chars().next().unwrap());
-                continue;
-            }
-
-            final_tokens
-                .push_back(DmToken::new(token.to_owned()).with_is_in_string(in_quote.is_some()));
+            final_tokens.push_back(token);
         }
 
         Ok(final_tokens)
