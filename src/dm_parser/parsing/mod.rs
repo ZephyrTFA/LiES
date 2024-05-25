@@ -38,10 +38,9 @@ impl DmParser {
 
     fn generate_object_tree(
         &mut self,
-        tokens: VecDeque<DmToken>,
+        _tokens: VecDeque<DmToken>,
     ) -> Result<ObjectTree, ParseError> {
-        let scopes = self.parse_scopes(tokens);
-        dbg!(&scopes);
+        // let scopes = self.parse_scopes(tokens);
         Ok(ObjectTree::default())
     }
 }
