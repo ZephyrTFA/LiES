@@ -1,4 +1,7 @@
-use std::fmt::{Display, Formatter};
+use std::{
+    error::Error,
+    fmt::{Display, Formatter},
+};
 
 use ::log::trace;
 
@@ -14,6 +17,8 @@ pub struct ParseError {
     file_path: Option<String>,
     line_number: Option<usize>,
 }
+
+impl Error for ParseError {}
 
 impl ParseError {
     pub const ERROR_DIRECTIVE_PARSE: ParseError = ParseError {

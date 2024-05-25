@@ -4,6 +4,8 @@ use std::collections::{HashMap, VecDeque};
 
 mod scope;
 
+use log::debug;
+
 use crate::{
     tokens::dm_token::DmToken,
     util::{dm_file::DmFile, ParseError},
@@ -38,9 +40,10 @@ impl DmParser {
 
     fn generate_object_tree(
         &mut self,
-        _tokens: VecDeque<DmToken>,
+        tokens: VecDeque<DmToken>,
     ) -> Result<ObjectTree, ParseError> {
-        // let scopes = self.parse_scopes(tokens);
+        let scopes = self.parse_scopes(tokens);
+        debug!("{:#?}", scopes); // todo!
         Ok(ObjectTree::default())
     }
 }

@@ -2,6 +2,13 @@ use std::path::{Path, PathBuf};
 
 use super::ParseError;
 
+#[cfg(test)]
+pub struct DmFile {
+    pub path: PathBuf,
+    pub lines: Vec<String>,
+}
+
+#[cfg(not(test))]
 pub struct DmFile {
     path: PathBuf,
     lines: Vec<String>,

@@ -1,6 +1,5 @@
 use std::{
     env,
-    ffi::OsStr,
     path::{Path, PathBuf},
 };
 
@@ -78,19 +77,14 @@ impl DmParser {
             .to_path_buf()
     }
 
-    pub fn load(&mut self, file: impl Into<PathBuf>) -> Result<(), ParseError> {
+    pub fn load_path(&mut self, path: impl Into<PathBuf>) -> Result<(), ParseError> {
         let current_traversal = self
             .environment_traversal
             .last()
             .cloned()
             .unwrap_or_else(|| ".".into());
 
-        let wanted_path = file.into();
-
-        if wanted_path.extension() == Some(OsStr::new("dmm")) {
-            return Ok(());
-        }
-
+        let wanted_path = path.into();
         let load_from = self
             .environment_directory
             .join(self.preprocessor.get_base_file_dir());
@@ -118,6 +112,11 @@ impl DmParser {
         })?;
 
         let actual_path = self.convert_canonical_path_to_relative(&wanted_path);
+        self.load_file(DmFile::new(&self.environment_directory, actual_path)?)
+    }
+
+    pub fn load_file(&mut self, file: DmFile) -> Result<(), ParseError> {
+        let actual_path = file.path();
 
         // announce each directory we enter if the depth is lower than the set depth
         match self.parse_log_mode {
@@ -149,8 +148,8 @@ impl DmParser {
             panic!();
         }
 
-        self.preprocessor.add_to_include_order(&actual_path);
-        let result = self.parse_file(&actual_path);
+        self.preprocessor.add_to_include_order(actual_path);
+        let result = self.parse_file(&file);
         if result.is_ok() {
             trace!("Successfully loaded file {}", actual_path.display());
         } else {
@@ -158,7 +157,7 @@ impl DmParser {
         }
 
         for pending_include in self.preprocessor.take_pending_includes() {
-            self.load(pending_include)?;
+            self.load_path(pending_include)?;
         }
 
         self.environment_traversal
@@ -168,10 +167,9 @@ impl DmParser {
         result
     }
 
-    fn parse_file(&mut self, file: impl Into<PathBuf>) -> Result<(), ParseError> {
-        let file = DmFile::new(&self.environment_directory, file.into())?;
-        let tokens = self.preprocessor.preprocess(&file)?;
-        self.parse_tokens(tokens, &file)?;
+    fn parse_file(&mut self, file: &DmFile) -> Result<(), ParseError> {
+        let tokens = self.preprocessor.preprocess(file)?;
+        self.parse_tokens(tokens, file)?;
         Ok(())
     }
 }

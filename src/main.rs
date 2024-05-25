@@ -44,5 +44,5 @@ fn lies() -> Result<(), ParseError> {
     let game_dir = env::var("GAME_DIR").expect("GAME_DIR not set.");
     let dme_file = env::var("DME_FILE").expect("DME_FILE not set.");
     let mut parser = DmParser::new(game_dir);
-    parser.load(dme_file)
+    parser.load_path(dme_file)
 }
