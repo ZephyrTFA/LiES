@@ -182,14 +182,10 @@ impl TokenizeState {
     pub fn add_line_token(&mut self, token: impl Into<DmToken>) {
         let token = token.into();
         trace!("Token: '{}'", token.value().escape_debug());
-        println!(
-            "adding token: {} - {} - {:?}",
-            token.value().escape_debug(),
-            self.token_is_in_string,
-            self.in_quote()
-        );
         self.line_tokens
             .push(token.with_is_in_string(self.token_is_in_string));
+        self.token_is_in_string = self.next_token_is_in_string;
+        self.next_token_is_in_string = false;
     }
 
     pub fn set_comment_single(&mut self, comment_single: bool) {

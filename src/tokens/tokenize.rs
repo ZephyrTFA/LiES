@@ -177,6 +177,7 @@ impl DmPreProcessor {
         quote_char: char,
         current_token: &str,
     ) -> TokenAction {
+        self.tokenize_state.set_token_is_in_string(true);
         if char == quote_char && count_backslashes(current_token) % 2 == 0 {
             if self.tokenize_state.multiline_string() {
                 return TokenAction::ContinueToken;
@@ -191,6 +192,7 @@ impl DmPreProcessor {
                     && count_backslashes(current_token) % 2 == 0 =>
                 {
                     self.tokenize_state.increment_string_interop_count();
+                    self.tokenize_state.set_next_token_is_in_string(true);
                     TokenAction::IsolateToken
                 }
                 '}' if self.tokenize_state.multiline_string()

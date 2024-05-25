@@ -16,6 +16,7 @@ pub fn handle_close_bracket(state: &mut TokenizeState, current_token: &str) -> T
         state.decrement_unmatched_brackets();
     } else if state.in_string_interop() {
         state.decrement_string_interop_count();
+        state.set_next_token_is_in_string(true);
     }
 
     TokenAction::IsolateToken
