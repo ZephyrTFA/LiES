@@ -2,24 +2,21 @@
 
 use std::collections::{HashMap, VecDeque};
 
-mod scope;
+pub mod proc;
+pub mod scope;
+pub mod type_path;
 
-use log::debug;
-
-use crate::{
-    tokens::dm_token::DmToken,
-    util::{dm_file::DmFile, ParseError},
-};
+use crate::{tokens::dm_token::DmToken, util::ParseError};
 
 use super::{
-    dm_types::{DmPath, DmProc, DmVar},
+    dm_types::{DmPath, DmVar},
     lib::DmParser,
 };
 
 #[derive(Default)]
 pub struct ObjectTree {
     types: HashMap<String, DmPath>,
-    global_procs: HashMap<String, DmProc>,
+    // global_procs: HashMap<String, DmProc>,
     global_vars: HashMap<String, DmVar>,
 }
 
@@ -30,20 +27,8 @@ struct Scope {
 }
 
 impl DmParser {
-    pub fn parse_tokens(
-        &mut self,
-        tokens: VecDeque<DmToken>,
-        _file: &DmFile,
-    ) -> Result<ObjectTree, ParseError> {
-        self.generate_object_tree(tokens)
-    }
-
-    fn generate_object_tree(
-        &mut self,
-        tokens: VecDeque<DmToken>,
-    ) -> Result<ObjectTree, ParseError> {
-        let scopes = self.parse_scopes(tokens);
-        debug!("{:#?}", scopes); // todo!
-        Ok(ObjectTree::default())
+    pub fn parse_tokens(&mut self, tokens: VecDeque<DmToken>) -> Result<(), ParseError> {
+        let _scopes = self.parse_scopes(tokens)?;
+        Ok(())
     }
 }

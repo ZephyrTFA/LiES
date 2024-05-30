@@ -169,7 +169,6 @@ impl DmParser {
 
     fn parse_file(&mut self, file: &DmFile) -> Result<(), ParseError> {
         let tokens = self.preprocessor.preprocess(file)?;
-        self.parse_tokens(tokens, file)?;
-        Ok(())
+        self.parse_tokens(tokens)
     }
 }

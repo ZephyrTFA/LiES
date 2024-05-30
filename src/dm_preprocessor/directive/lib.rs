@@ -32,21 +32,9 @@ impl DmPreProcessor {
 
         self.replace_all_defines_possible(&mut effective_args, true)?;
         while !effective_args.is_empty() {
-            if effective_args
-                .front()
-                .unwrap()
-                .value()
-                .chars()
-                .all(char::is_whitespace)
-            {
+            if effective_args.front().unwrap().is_only_whitespace(false) {
                 effective_args.pop_front().unwrap();
-            } else if effective_args
-                .back()
-                .unwrap()
-                .value()
-                .chars()
-                .all(char::is_whitespace)
-            {
+            } else if effective_args.back().unwrap().is_only_whitespace(false) {
                 effective_args.pop_back().unwrap();
             } else {
                 break;

@@ -41,7 +41,7 @@ impl DmPreProcessor {
 
                 let mut args = Self::take_until_match_any(&mut tokens, &["\n", "//"]);
                 while !args.is_empty() {
-                    if args[0].value().chars().all(char::is_whitespace) {
+                    if args[0].is_only_whitespace(false) {
                         args.remove(0);
                     } else if args
                         .last()

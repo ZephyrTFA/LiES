@@ -33,6 +33,14 @@ impl DmToken {
         &self.value
     }
 
+    pub fn is_only_whitespace(&self, include_newline: bool) -> bool {
+        if include_newline {
+            self.value.chars().all(char::is_whitespace)
+        } else {
+            self.value.chars().all(|c| c.is_whitespace() && c != '\n')
+        }
+    }
+
     pub fn set_line(&mut self, line: usize) {
         self.line = Some(line);
     }

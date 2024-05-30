@@ -1,6 +1,6 @@
 use std::{
     error::Error,
-    fmt::{Display, Formatter},
+    fmt::{Debug, Display, Formatter},
 };
 
 use ::log::trace;
@@ -11,7 +11,6 @@ pub mod exit_codes;
 pub mod log;
 pub mod whitespace_char;
 
-#[derive(Debug)]
 pub struct ParseError {
     error_code: i32,
     file_path: Option<String>,
@@ -91,6 +90,21 @@ impl ParseError {
         file_path: None,
         line_number: None,
     };
+    pub const EXPECTED_DIFFERENT_TOKEN: ParseError = ParseError {
+        error_code: 13,
+        file_path: None,
+        line_number: None,
+    };
+    pub const UNEXPECTED_EOL: ParseError = ParseError {
+        error_code: 14,
+        file_path: None,
+        line_number: None,
+    };
+    pub const INVALID_IDENTIFIER: ParseError = ParseError {
+        error_code: 15,
+        file_path: None,
+        line_number: None,
+    };
 }
 
 impl ParseError {
@@ -150,9 +164,23 @@ impl Display for ParseError {
             9 => "Macro arguments are malformed",
             10 => "Macro has too many arguments",
             11 => "Macro has too few arguments",
+            12 => "Mismatched indentation count",
+            13 => "Expected different token",
+            14 => "Unexpected end of line",
+            15 => "Invalid identifier",
             _ => "Unknown error",
         };
         write!(f, "{}", fail_reason)
+    }
+}
+
+impl Debug for ParseError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "ParseError {{ error_code: {}, file_path: {:?}, line_number: {:?} }}({})",
+            self.error_code, self.file_path, self.line_number, self
+        )
     }
 }
 
