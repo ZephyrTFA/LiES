@@ -1,5 +1,5 @@
 [package]
-name = "lies"     # Living In Eternal Slumber
+name = "lies"
 version = "0.1.0"
 edition = "2021"
 
