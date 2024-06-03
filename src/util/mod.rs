@@ -105,6 +105,11 @@ impl ParseError {
         file_path: None,
         line_number: None,
     };
+    pub const ERROR_NOT_IMPLEMENTED: ParseError = ParseError {
+        error_code: 16,
+        file_path: None,
+        line_number: None,
+    };
 }
 
 impl ParseError {
@@ -168,6 +173,7 @@ impl Display for ParseError {
             13 => "Expected different token",
             14 => "Unexpected end of line",
             15 => "Invalid identifier",
+            16 => "Not implemented",
             _ => "Unknown error",
         };
         write!(f, "{}", fail_reason)
