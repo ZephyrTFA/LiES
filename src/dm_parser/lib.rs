@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use log::{debug, error, info, trace};
+use log::{debug, error, info, trace, warn};
 
 use crate::{
     dm_preprocessor::lib::DmPreProcessor,
@@ -52,6 +52,12 @@ impl Default for DmParser {
 }
 
 impl DmParser {
+    pub fn environment_directory(&self) -> &PathBuf {
+        &self.environment_directory
+    }
+}
+
+impl DmParser {
     pub fn new(environment_directory: impl Into<PathBuf>) -> Self {
         let environment_directory = environment_directory.into().canonicalize().unwrap();
         debug!(
@@ -84,13 +90,11 @@ impl DmParser {
             .cloned()
             .unwrap_or_else(|| ".".into());
 
-        let wanted_path = path.into();
         let load_from = self
             .environment_directory
             .join(self.preprocessor.get_base_file_dir());
 
-        let wanted_path = load_from.join(current_traversal).join(wanted_path);
-
+        let wanted_path = load_from.join(current_traversal).join(path.into());
         let wanted_path_str = wanted_path.to_str().ok_or(
             ParseError::DM_FILE_LOAD_FAILURE
                 .with_file_path(wanted_path.to_string_lossy().to_string()),
@@ -164,10 +168,21 @@ impl DmParser {
             .pop() // not returning an Err here because this SHOULD not be possible
             .expect("failed to pop directory traversal?");
 
-        result
+        result.map_err(|err| err.with_file_path(file.path().to_str().unwrap().to_string()))
     }
 
     fn parse_file(&mut self, file: &DmFile) -> Result<(), ParseError> {
+        let file_extension = file
+            .path()
+            .extension()
+            .expect("parsing file without extension!")
+            .to_str()
+            .expect("failed to convert extension to str");
+        if !matches!(file_extension, "dme" | "dm") {
+            warn!("Skipping File: {}", file.path().display());
+            return Ok(());
+        }
+
         let tokens = self.preprocessor.preprocess(file)?;
         self.parse_tokens(tokens)
     }
