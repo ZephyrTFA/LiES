@@ -41,8 +41,11 @@ impl DmPreProcessor {
             }
         }
 
+        effective_args.make_contiguous();
+        let directive_args = effective_args.as_slices().0;
+
         if directive == "else" {
-            if !effective_args.is_empty() {
+            if !directive_args.is_empty() {
                 warn!("`else` directive has arguments that will be ignored");
             };
             if !self.is_skipping() {
@@ -51,8 +54,15 @@ impl DmPreProcessor {
             return Ok(());
         }
 
+        if directive == "elif" {
+            if !self.is_skipping() {
+                self.increment_logical_skip_level();
+            }
+            return self.handle_if(directive_args);
+        }
+
         if directive == "endif" {
-            if !effective_args.is_empty() {
+            if !directive_args.is_empty() {
                 warn!("`endif` directive has arguments that will be ignored");
             };
             if self.is_skipping() {
@@ -68,8 +78,6 @@ impl DmPreProcessor {
             return Ok(());
         }
 
-        effective_args.make_contiguous();
-        let directive_args = effective_args.as_slices().0;
         match directive {
             "error" => self.handle_error(directive_args),
             "if" => self.handle_if(directive_args),
