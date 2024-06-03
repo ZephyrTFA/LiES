@@ -1,18 +1,24 @@
 use std::collections::VecDeque;
 
-use log::{error, trace};
+use log::{error, trace, warn};
 
 use crate::{dm_preprocessor::lib::DmPreProcessor, tokens::dm_token::DmToken, util::ParseError};
 
+fn log_malformed_if(reason: &str, args: &[DmToken]) {
+    error!("Malformed #if: {reason}");
+    error!("Remaining tokens: {args:#?}");
+}
+
 impl DmPreProcessor {
     // parentheses are last because we only resolve them when all the ops inside of them are resolved
-    const ORDER_OF_OPS: [&'static str; 9] = ["!", "!=", ">", ">=", "<", "<=", "&&", "||", "("];
+    const ORDER_OF_OPS: [&'static str; 10] =
+        ["!", "==", "!=", ">", ">=", "<", "<=", "&&", "||", "("];
     const DEFINED: &'static str = "defined";
 
     pub(super) fn handle_if(&mut self, args: &[DmToken]) -> Result<(), ParseError> {
         if args.is_empty() {
-            error!("attempted to parse `if` directive with no arguments");
-            panic!();
+            log_malformed_if("No arguments", args);
+            return Err(ParseError::UNEXPECTED_EOL);
         }
 
         trace!("`if` directive with args: {:#?}", args);
@@ -27,21 +33,24 @@ impl DmPreProcessor {
         while defined_index.is_some() {
             let index = defined_index.unwrap();
             if index + 3 >= current_run.len() {
-                error!("Malformed preprocessor if directive");
+                log_malformed_if("malformed defined call, not enough remaining tokens", args);
                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
             }
 
             if current_run[index + 1].value() != "(" || current_run[index + 3].value() != ")" {
-                error!("Malformed preprocessor if directive");
+                log_malformed_if(
+                    "malformed defined call, wrong format, expected defined(DEFINE)",
+                    args,
+                );
                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
             }
 
             let defined_name = current_run[index + 2].value();
             let is_defined = self.defines.contains_key(defined_name);
             trace!("defined({}) = {}", defined_name, is_defined);
-            current_run.remove(index + 3);
-            current_run.remove(index + 2);
-            current_run.remove(index + 1);
+            current_run.remove(index);
+            current_run.remove(index);
+            current_run.remove(index);
             current_run[index] = DmToken::new(if is_defined {
                 "1".to_string()
             } else {
@@ -67,7 +76,7 @@ impl DmPreProcessor {
                     match token {
                         "!" => {
                             if token_index + 1 >= current_run.len() {
-                                error!("Malformed preprocessor if directive: {:#?}", current_run);
+                                log_malformed_if("not enough tokens for !", &current_run);
                                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
                             }
 
@@ -83,8 +92,8 @@ impl DmPreProcessor {
                             }
                         }
                         "==" => {
-                            if token_index + 1 >= current_run.len() || token_index < 1 {
-                                error!("Malformed preprocessor if directive: {:#?}", current_run);
+                            if token_index + 1 >= current_run.len() || token_index == 0 {
+                                log_malformed_if("not enough tokens for ==", &current_run);
                                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
                             }
 
@@ -105,7 +114,7 @@ impl DmPreProcessor {
                         }
                         "!=" => {
                             if token_index + 1 >= current_run.len() || token_index < 1 {
-                                error!("Malformed preprocessor if directive: {:#?}", current_run);
+                                log_malformed_if("not enough tokens for !=", &current_run);
                                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
                             }
 
@@ -126,7 +135,7 @@ impl DmPreProcessor {
                         }
                         ">" => {
                             if token_index + 1 >= current_run.len() || token_index < 1 {
-                                error!("Malformed preprocessor if directive: {:#?}", current_run);
+                                log_malformed_if("not enough tokens for >", &current_run);
                                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
                             }
 
@@ -147,7 +156,7 @@ impl DmPreProcessor {
                         }
                         ">=" => {
                             if token_index + 1 >= current_run.len() || token_index < 1 {
-                                error!("Malformed preprocessor if directive: {:#?}", current_run);
+                                log_malformed_if("not enough tokens for >=", &current_run);
                                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
                             }
 
@@ -168,7 +177,7 @@ impl DmPreProcessor {
                         }
                         "<" => {
                             if token_index + 1 >= current_run.len() || token_index < 1 {
-                                error!("Malformed preprocessor if directive: {:#?}", current_run);
+                                log_malformed_if("not enough tokens for <", &current_run);
                                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
                             }
 
@@ -189,7 +198,7 @@ impl DmPreProcessor {
                         }
                         "<=" => {
                             if token_index + 1 >= current_run.len() || token_index < 1 {
-                                error!("Malformed preprocessor if directive: {:#?}", current_run);
+                                log_malformed_if("not enough tokens for <=", &current_run);
                                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
                             }
 
@@ -210,7 +219,7 @@ impl DmPreProcessor {
                         }
                         "&&" => {
                             if token_index + 1 >= current_run.len() || token_index < 1 {
-                                error!("Malformed preprocessor if directive: {:#?}", current_run);
+                                log_malformed_if("not enough tokens for &&", &current_run);
                                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
                             }
 
@@ -232,7 +241,7 @@ impl DmPreProcessor {
                         }
                         "||" => {
                             if token_index + 1 >= current_run.len() || token_index < 1 {
-                                error!("Malformed preprocessor if directive: {:#?}", current_run);
+                                log_malformed_if("not enough tokens for ||", &current_run);
                                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
                             }
 
@@ -253,19 +262,21 @@ impl DmPreProcessor {
                             }
                         }
                         "(" => {
-                            if token_index + 3 >= current_run.len() {
-                                error!("Malformed preprocessor if directive: {:#?}", current_run);
+                            if token_index + 3 > current_run.len() {
+                                log_malformed_if(
+                                    "not enough tokens for parenthesis collapse",
+                                    &current_run,
+                                );
                                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
                             }
                             // check index + 1 isn't a ( or )
                             let next_token = current_run[token_index + 1].value();
                             match next_token {
                                 ")" => {
-                                    error!(
-                                        "Malformed preprocessor if directive: {:#?}",
-                                        current_run
-                                    );
-                                    return Err(ParseError::ERROR_DIRECTIVE_PARSE);
+                                    warn!("collapsed empty parenthesis in #if statement");
+                                    did_something = true;
+                                    current_run.remove(token_index);
+                                    current_run.remove(token_index);
                                 }
                                 "(" => {
                                     continue;
@@ -283,7 +294,7 @@ impl DmPreProcessor {
                             did_something = true;
                         }
                         _ => {
-                            error!("unhandled operator: {}", token);
+                            log_malformed_if("unknown token operator", &current_run);
                             return Err(ParseError::ERROR_DIRECTIVE_PARSE);
                         }
                     }
@@ -295,13 +306,13 @@ impl DmPreProcessor {
             }
 
             if current_run.len() != 1 {
-                error!("Malformed preprocessor if directive: {:#?}", current_run);
+                log_malformed_if("too many tokens remaining", &current_run);
                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
             }
 
             let result = current_run[0].value().parse::<i32>();
             if result.is_err() {
-                error!("Malformed preprocessor if directive: {:#?}", current_run);
+                log_malformed_if("failed to parse final token as a number", &current_run);
                 return Err(ParseError::ERROR_DIRECTIVE_PARSE);
             }
 
