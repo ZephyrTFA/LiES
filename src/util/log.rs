@@ -1,28 +1,33 @@
 use std::{
-    borrow::Borrow,
     env::{self, args},
-    fs,
-    io::{self, IsTerminal, Stdout, Write},
+    fs::{self, create_dir_all, DirEntry, File},
+    io::{stdout, IsTerminal, Write},
     path::{Path, PathBuf},
-    process::exit,
 };
 
-use log::{Level, LevelFilter, Log};
+use chrono::Local;
+use log::{info, Level, LevelFilter, Log};
 use once_cell::sync::Lazy;
 
-#[derive(Default)]
 struct InternalLogger {
-    log_stdout: Option<fs::File>,
+    log_dir_path: PathBuf,
+    log_file_path: PathBuf,
+    log_file: File,
 }
 
 static LOGGER: Lazy<InternalLogger> = Lazy::new(|| {
-    let mut _self = InternalLogger::default();
-    _self.setup_log_file();
-    _self
+    let (log_dir_path, log_file_path) = get_paths_dir_and_file();
+    let log_file = get_file(&log_dir_path, &log_file_path);
+    InternalLogger {
+        log_dir_path,
+        log_file_path,
+        log_file,
+    }
 });
 
 pub fn init() {
-    log::set_logger((*LOGGER).borrow()).unwrap();
+    let logger: &InternalLogger = &LOGGER;
+    log::set_logger(logger).expect("failed to set logger");
 
     let mut highest_log_level = log::LevelFilter::Info;
     if let Ok(value) = env::var("LIES_LOG_LEVEL") {
@@ -51,10 +56,7 @@ pub fn init() {
                 }
             }
         }
-        println!(
-            "Overriding log level due to environment variable LIES_LOG_LEVEL to {}",
-            highest_log_level
-        );
+        println!("Log level: {}", highest_log_level);
     } else {
         for arg in args() {
             match arg.as_str() {
@@ -69,45 +71,54 @@ pub fn init() {
         }
     }
     log::set_max_level(highest_log_level);
+    info!("Log Directory: {}", logger.log_dir_path.display());
+    info!("Log File: {}", logger.log_file_path.display());
+}
+
+fn get_paths_dir_and_file() -> (PathBuf, PathBuf) {
+    let log_directory = env::var("LIES_LOG_DIR").unwrap_or("./logs".to_string());
+    create_dir_all(&log_directory).expect("failed to create log dir");
+    let log_directory = Path::canonicalize(&PathBuf::from(log_directory)).unwrap();
+
+    let current_time = Local::now();
+    let log_file_path: PathBuf = current_time.format("%Y%m%d_%H%M%S.log").to_string().into();
+
+    (log_directory, log_file_path)
+}
+
+fn get_file(dir: &PathBuf, file: &PathBuf) -> File {
+    let mut old_logs: Vec<DirEntry> = fs::read_dir(dir)
+        .unwrap()
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| {
+            entry
+                .path()
+                .extension()
+                .is_some_and(|extension| extension == "log")
+        })
+        .collect();
+    old_logs.sort_by(|a, b| {
+        b.metadata()
+            .unwrap()
+            .created()
+            .unwrap()
+            .cmp(&a.metadata().unwrap().created().unwrap())
+    });
+
+    if old_logs.len() > 5 {
+        for old_log in &old_logs[5..] {
+            println!(
+                "Removing old log `{}`",
+                old_log.file_name().to_str().unwrap()
+            );
+            fs::remove_file(old_log.path()).expect("failed to delete old log file");
+        }
+    }
+
+    File::create_new(dir.join(file)).expect("failed to create log file")
 }
 
 impl InternalLogger {
-    fn get_log_file_target() -> PathBuf {
-        let mut args = args();
-        while let Some(arg) = args.next() {
-            if arg == "--log-file" {
-                if let Some(path) = args.next() {
-                    return Path::new(&path).to_path_buf();
-                } else {
-                    eprintln!("Missing argument for --log-file");
-                    exit(1);
-                }
-            }
-        }
-        "lies.log".into()
-    }
-
-    fn setup_log_file(&mut self) {
-        let log_file = Self::get_log_file_target();
-        if log_file.exists() {
-            std::fs::copy(&log_file, format!("{}.old", log_file.to_str().unwrap())).unwrap();
-        }
-        self.log_stdout = Some(
-            std::fs::OpenOptions::new()
-                .create(true)
-                .write(true)
-                .truncate(true)
-                .open(log_file)
-                .unwrap(),
-        );
-    }
-
-    fn get_stdout(&self) -> (Stdout, Option<&std::fs::File>) {
-        let stdout = io::stdout();
-        let log_stdout = self.log_stdout.as_ref();
-        (stdout, log_stdout)
-    }
-
     fn color(&self, level: Level, message: &str) -> String {
         if !self.color_enabled() {
             return message.to_string();
@@ -125,7 +136,7 @@ impl InternalLogger {
     }
 
     fn color_enabled(&self) -> bool {
-        self.get_stdout().0.is_terminal()
+        stdout().is_terminal()
     }
 }
 
@@ -144,26 +155,28 @@ impl Log for InternalLogger {
         let colored = self.color(record.level(), &record_body);
         let headers = format!("[{}][{}]", timestamp, record.level(),);
 
-        let mut stdout = self.get_stdout();
-        stdout.0.write_all(headers.as_bytes()).unwrap();
-        stdout.0.write_all(b" ").unwrap();
-        stdout.0.write_all(colored.as_bytes()).unwrap();
-        stdout.0.write_all(b"\n").unwrap();
-        stdout.0.flush().unwrap();
-        if let Some(mut log_stdout) = stdout.1 {
-            log_stdout.write_all(headers.as_bytes()).unwrap();
-            log_stdout.write_all(b" ").unwrap();
-            log_stdout.write_all(record_body.as_bytes()).unwrap();
-            log_stdout.write_all(b"\n").unwrap();
-            log_stdout.flush().unwrap();
+        // Trace output will never go to stdout
+        if record.level() < Level::Trace {
+            let mut stdout = stdout();
+            stdout.write_all(headers.as_bytes()).unwrap();
+            stdout.write_all(b" ").unwrap();
+            stdout.write_all(colored.as_bytes()).unwrap();
+            stdout.write_all(b"\n").unwrap();
+            stdout.flush().expect("failed to write to stdout");
         }
+        let mut log_file = self.log_file.try_clone().unwrap();
+        log_file.write_all(headers.as_bytes()).unwrap();
+        log_file.write_all(b" ").unwrap();
+        log_file.write_all(record_body.as_bytes()).unwrap();
+        log_file.write_all(b"\n").unwrap();
+        log_file.flush().expect("failed to write to file");
     }
 
     fn flush(&self) {
-        let mut stdout = self.get_stdout();
-        stdout.0.flush().unwrap();
-        if let Some(mut log_stdout) = stdout.1 {
-            log_stdout.flush().unwrap();
-        }
+        self.log_file
+            .try_clone()
+            .unwrap()
+            .flush()
+            .expect("failed to flush file buffer");
     }
 }
