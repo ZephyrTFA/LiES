@@ -1,4 +1,4 @@
-use log::trace;
+use log::{debug, trace};
 #[warn(unused_imports)]
 use log::{error, warn};
 
@@ -20,16 +20,20 @@ impl DmPreProcessor {
 
         let name = args[0].value();
         if args.len() == 1 {
+            debug!("defined flag `{name}`");
             self.add_define(DmDefineDefinition::new_flag(name));
             return Ok(());
         }
 
+        debug!("define name `{name}`");
         let define_args = &args[1..];
         if define_args[0].value() == "(" {
+            debug!("define is a macro");
             return self.handle_macro(name, define_args);
         }
 
         let body: Vec<_> = args.iter().skip(1).cloned().collect();
+        trace!("define body: {:?}", &body);
         self.add_define(DmDefineDefinition::new_basic_replace(name, &body));
 
         Ok(())
@@ -74,6 +78,7 @@ impl DmPreProcessor {
             trace!("checking arg names");
             for arg in arg_names.iter().rev().skip(1).rev() {
                 if !is_valid_identifier(arg) {
+                    error!("Macro argument name is invalid `{arg}`");
                     return Err(ParseError::ERROR_MACRO_ARG_NAME_INVALID_CHAR);
                 }
             }
