@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use log::{debug, error};
+use ::log::{error, trace};
 
 use crate::{
     tokens::dm_token::DmToken,
@@ -14,13 +14,14 @@ impl DmPreProcessor {
         self.tokenize_state.set_lines(file.lines());
         let mut tokens: VecDeque<DmToken> = self.start_tokenizing().into();
         let mut final_tokens: VecDeque<DmToken> = VecDeque::new();
+
         loop {
             if tokens.is_empty() {
                 break;
             }
 
             let token = tokens.pop_front().unwrap();
-            debug!("Token: {}", token.value().escape_debug());
+            trace!("Token: {}", token.value().escape_debug());
             let token = if !token.is_in_string() {
                 self.do_define_replacement(token, &mut tokens)
                     .map_err(|err| {
@@ -29,7 +30,6 @@ impl DmPreProcessor {
             } else {
                 Some(token)
             };
-
             if token.is_none() {
                 continue;
             }
@@ -40,22 +40,14 @@ impl DmPreProcessor {
                 let directive = directive.value(); // needs to be seperate because of borrow checker
 
                 let mut args = Self::take_until_match_any(&mut tokens, &["\n", "//"]);
-                while !args.is_empty() {
-                    if args[0].is_only_whitespace(false) {
-                        args.remove(0);
-                    } else if args
-                        .last()
-                        .unwrap()
-                        .value()
-                        .chars()
-                        .all(char::is_whitespace)
-                    {
-                        args.pop();
-                    } else {
-                        break;
+                trace!("directive args: {args:?}");
+                if !args.is_empty() {
+                    if !args[0].is_only_whitespace(false) {
+                        error!("somehow no whitespace after directive token");
+                        return Err(ParseError::EXPECTED_DIFFERENT_TOKEN);
                     }
+                    args.remove(0);
                 }
-
                 self.handle_directive(directive, &args).map_err(|err| {
                     err.with_file_path(self.get_current_file().display().to_string())
                 })?;
