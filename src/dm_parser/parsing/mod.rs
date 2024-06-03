@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::collections::VecDeque;
 
 pub mod scope;
@@ -11,6 +9,6 @@ use super::lib::DmParser;
 
 impl DmParser {
     pub fn parse_tokens(&mut self, _tokens: VecDeque<DmToken>) -> Result<(), ParseError> {
-        unimplemented!()
+        Ok(())
     }
 }
