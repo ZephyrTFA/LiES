@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use log::{debug, error};
+use log::{debug, error, trace};
 
 #[cfg(test)]
 use once_cell::sync::Lazy;
@@ -136,16 +136,14 @@ impl DmPreProcessor {
         macro_definition: &DmDefineDefinition,
         tokens: &mut VecDeque<DmToken>,
     ) -> Result<Option<DmToken>, ParseError> {
-        if tokens.is_empty() || tokens.pop_front().unwrap().value() != "(" {
-            error!("Expected `(` after macro call");
-            return Err(ParseError::ERROR_MACRO_MALFORMED_CALL);
+        if !tokens.pop_front().is_some_and(|tok| tok.value() == "(") {
+            return Err(ParseError::EXPECTED_DIFFERENT_TOKEN);
         }
 
         let param_info = macro_definition.macro_param_info();
-
         let mut raw_args = vec![];
         let mut arg_split_points = vec![];
-        let mut paren_count = 1;
+        let mut paren_count = 1; // account for the one we popped out
         while !tokens.is_empty() {
             let token = tokens.pop_front();
             if token.is_none() {
@@ -288,20 +286,24 @@ impl DmPreProcessor {
 
         let define = define.unwrap();
         if define.is_macro() {
+            if !next_tokens.front().is_some_and(|tok| tok.value() == "(") {
+                debug!("ignoring macro, no parenthesis");
+                return Ok(Some(token));
+            }
             debug!("macro `{}`", define.name());
             return Self::do_macro_replacement(define, next_tokens);
         }
 
-        let mut tokens = define.body().to_vec();
+        let tokens = define.body().to_vec();
+        debug!("define replacement: `{}` `{:?}`", define.name(), &tokens);
         if tokens.is_empty() {
             return Ok(None);
         }
 
-        let token = tokens.remove(0);
         next_tokens.reserve(tokens.len());
         for token in tokens.into_iter().rev() {
             next_tokens.push_front(token);
         }
-        Ok(Some(token))
+        Ok(None)
     }
 }
