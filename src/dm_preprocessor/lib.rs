@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use log::{debug, error, trace};
+use log::{debug, error};
 
 #[cfg(test)]
 use once_cell::sync::Lazy;
@@ -114,10 +114,12 @@ impl DmPreProcessor {
 
     pub fn increment_logical_skip_level(&mut self) {
         self.logical_skip_levels += 1;
+        debug!("skip level: {}", self.logical_skip_levels);
     }
 
     pub fn decrement_logical_skip_level(&mut self) {
         self.logical_skip_levels -= 1;
+        debug!("skip level: {}", self.logical_skip_levels);
     }
 
     pub fn logical_skip_level(&self) -> usize {

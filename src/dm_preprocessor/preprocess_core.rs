@@ -35,6 +35,16 @@ impl DmPreProcessor {
             }
             let token = token.unwrap();
 
+            if !token.is_in_string() {
+                let chars: Vec<char> = token.value().chars().collect();
+                if chars.first().is_some_and(|c| c.is_whitespace())
+                    && !chars.iter().all(|c| c.is_whitespace())
+                {
+                    error!("token not in string and contains mixed whitespace and non whitespace chars.");
+                    return Err(ParseError::INTERNAL_ERROR);
+                }
+            }
+
             if !token.is_in_string() && token.value() == "#" {
                 let directive = tokens.pop_front().unwrap();
                 let directive = directive.value(); // needs to be seperate because of borrow checker

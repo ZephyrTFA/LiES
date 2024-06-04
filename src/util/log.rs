@@ -9,13 +9,19 @@ use chrono::Local;
 use log::{info, Level, LevelFilter, Log};
 use once_cell::sync::Lazy;
 
-struct InternalLogger {
+pub struct InternalLogger {
     log_dir_path: PathBuf,
     log_file_path: PathBuf,
     log_file: File,
 }
 
-static LOGGER: Lazy<InternalLogger> = Lazy::new(|| {
+impl InternalLogger {
+    pub fn get_log_file_full_path(&self) -> PathBuf {
+        self.log_dir_path.join(&self.log_file_path)
+    }
+}
+
+pub static LOGGER: Lazy<InternalLogger> = Lazy::new(|| {
     let (log_dir_path, log_file_path) = get_paths_dir_and_file();
     let log_file = get_file(&log_dir_path, &log_file_path);
     InternalLogger {

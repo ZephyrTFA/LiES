@@ -4,7 +4,7 @@ impl DmPreProcessor {
     pub(super) fn initial_defines() -> Vec<DmDefineDefinition> {
         vec![
             // DM_VERSION and DM_BUILD should match the version of BYOND we are compatible with.
-            DmDefineDefinition::new_basic_replace("DM_VERSION", &["516".into()]),
+            DmDefineDefinition::new_basic_replace("DM_VERSION", &["515".into()]),
             DmDefineDefinition::new_basic_replace("DM_BUILD", &["1636".into()]),
             DmDefineDefinition::new_basic_replace("NORTH", &["1".into()]),
             DmDefineDefinition::new_basic_replace("SOUTH", &["2".into()]),

@@ -6,7 +6,7 @@ use crate::{
 pub fn handle_hash(state: &mut TokenizeState) -> TokenAction {
     if is_first_non_whitespace_char(state.line_tokens()) {
         state.set_in_preprocessor(true);
-        return TokenAction::EndToken;
+        return TokenAction::IsolateToken;
     }
 
     TokenAction::None

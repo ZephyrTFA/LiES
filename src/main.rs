@@ -2,6 +2,7 @@ use dm_parser::lib::DmParser;
 use dotenv::dotenv;
 use log::{error, info, log, Level};
 use std::env;
+use util::log::LOGGER;
 
 pub mod dm_parser;
 pub mod dm_preprocessor;
@@ -56,6 +57,10 @@ fn lies() -> bool {
     } else {
         info!("Success.");
     };
+    info!(
+        "Log file can be found at {}",
+        LOGGER.get_log_file_full_path().display()
+    );
 
     result.is_ok()
 }
