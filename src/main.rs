@@ -1,13 +1,17 @@
-use dm_parser::lib::DmParser;
+pub mod preprocess;
+pub mod tokenize;
+pub mod util;
+
 use dotenv::dotenv;
 use log::{error, info, log, Level};
-use std::env;
+use std::{
+    env,
+    path::{Path, PathBuf},
+    process::exit,
+    str::FromStr,
+};
+use tokenize::lib::tokenize_file;
 use util::log::LOGGER;
-
-pub mod dm_parser;
-pub mod dm_preprocessor;
-pub mod tokens;
-pub mod util;
 
 pub fn main() {
     dotenv().ok();
@@ -25,31 +29,31 @@ pub fn main() {
         if result { "Done" } else { "Failed" },
         stopwatch.elapsed().as_secs_f32()
     );
+
+    exit(if result { 0 } else { 1 });
 }
 
 fn lies() -> bool {
     let game_dir = env::var("GAME_DIR").expect("GAME_DIR not set.");
     let dme_file = env::var("DME_FILE").expect("DME_FILE not set.");
-    let mut parser = DmParser::new(game_dir);
-    let result = parser.load_path(dme_file);
+
+    // let mut parser = DmParser::new(game_dir);
+    // let result = parser.load_path(dme_file);
+    let result = tokenize_file(&Path::join(
+        &PathBuf::from_str(&game_dir).unwrap(),
+        PathBuf::from_str(&dme_file).unwrap(),
+    ));
 
     if result.is_err() {
         let parse_error = result.as_ref().err().unwrap();
         error!("Error while parsing:");
         error!("\t{}", parse_error.to_string());
-        if let Some(file_path) = parse_error.file_path() {
-            let canonical = parser
-                .environment_directory()
-                .join(file_path)
-                .canonicalize()
-                .unwrap();
+        if let Some(file_data) = parse_error.file_data() {
             error!(
-                "\tat {}{}",
-                canonical.display(),
-                parse_error
-                    .line_number()
-                    .map(|num| format!(":{num}"))
-                    .unwrap_or_default()
+                "\tat {}:({},{})",
+                file_data.path(),
+                file_data.line(),
+                file_data.column(),
             );
         } else {
             error!("\\- at unknown location");
