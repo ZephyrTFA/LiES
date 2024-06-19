@@ -23,7 +23,8 @@ fn tokenize_tests() {
         vec!["\t\t \t"],
     ];
 
-    let actual = tokenize_lines(input.iter().cloned(), "test.test").expect("tokenize failed");
+    let actual = tokenize_lines(input.iter().cloned(), std::path::Path::new("test.test"))
+        .expect("tokenize failed");
     let mut actual = actual.tokens().clone();
     actual.sort_by_key(|token| token.line());
 

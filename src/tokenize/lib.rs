@@ -24,9 +24,9 @@ fn can_be_ident(tokens: &VecDeque<char>) -> bool {
 
 pub fn tokenize_lines(
     lines: impl Iterator<Item = impl Into<String>>,
-    file_path: impl Into<String>,
+    file_path: &Path,
 ) -> Result<FileTokens, ParseError> {
-    let mut file_tokens: FileTokens = FileTokens::new(file_path.into());
+    let mut file_tokens: FileTokens = FileTokens::new(file_path.display().to_string());
     let mut token_chars: VecDeque<char> = VecDeque::new();
     let mut line_idx = 0;
     #[allow(unused)] // its used in the below macro, but doesnt get marked as used
@@ -35,11 +35,10 @@ pub fn tokenize_lines(
     macro_rules! push_token {
         () => {
             if !token_chars.is_empty() {
-                let char_offset = token_chars.len() - 1;
                 file_tokens.add_token(Token::new(
                     token_chars.iter().collect(),
                     line_idx,
-                    char_idx - char_offset,
+                    char_idx - token_chars.len(),
                 ));
                 token_chars.clear();
             }
@@ -52,11 +51,10 @@ pub fn tokenize_lines(
 
         let mut chars: VecDeque<char> = line.chars().collect();
         while let Some(line_char) = chars.pop_front() {
-            char_idx += 1;
-
             macro_rules! push_char {
                 () => {
                     token_chars.push_back(line_char);
+                    char_idx += 1;
                     continue;
                 };
             }
@@ -127,5 +125,5 @@ pub fn tokenize_file(file: &Path) -> Result<FileTokens, ParseError> {
         error!("Failed to read file at `{file:?}`: {err}");
         ParseError::new(ParseErrorCode::Internal)
     })?;
-    tokenize_lines(file_lines_store.split('\n'), file.to_str().unwrap())
+    tokenize_lines(file_lines_store.split('\n'), file)
 }
