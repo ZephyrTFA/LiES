@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::tokenize::token::Token;
+use crate::{preprocess::PreprocessState, tokenize::token::Token};
 
 #[derive(Debug)]
 pub struct ParseError {
@@ -30,22 +30,41 @@ impl ParseError {
     pub fn with_file_data<'a>(
         mut self,
         path: impl Into<&'a str>,
+        full_path: impl Into<&'a str>,
         line: usize,
         column: usize,
     ) -> Self {
-        if self.file.is_some() {
-            panic!("attempt to set file data twice for ParseError");
-        }
         self.file = Some(FileData {
             path: path.into().to_string(),
+            full_path: full_path.into().to_string(),
             line,
             column,
         });
         self
     }
 
-    pub fn with_token<'a>(self, path: impl Into<&'a str>, token: &Token) -> Self {
-        self.with_file_data(path, token.line(), token.column())
+    pub fn with_preprocessor_state(self, state: &PreprocessState, token: &Token) -> Self {
+        let current_file_entry = state
+            .environment()
+            .current_file()
+            .expect("with_preprocessor_state but no active file");
+        self.with_file_data(
+            current_file_entry.path(),
+            current_file_entry.full_path(),
+            token.line(),
+            token.column(),
+        )
+    }
+
+    pub fn with_preprocessor_state_if_not_set(
+        self,
+        state: &PreprocessState,
+        token: &Token,
+    ) -> Self {
+        if self.file.is_some() {
+            return self;
+        }
+        self.with_preprocessor_state(state, token)
     }
 }
 
@@ -56,6 +75,7 @@ pub enum ParseErrorCode {
     UnexpectedEOL = 3,
     ExpectedString = 4,
     MalformedString = 5,
+    UnknownDirective = 6,
 }
 
 impl fmt::Display for ParseErrorCode {
@@ -69,6 +89,7 @@ impl fmt::Display for ParseErrorCode {
                 Self::UnexpectedEOL => "Unexpected end of line",
                 Self::ExpectedString => "Expected string",
                 Self::MalformedString => "Malformed string",
+                Self::UnknownDirective => "Unknown directive",
             }
         )
     }
@@ -77,6 +98,7 @@ impl fmt::Display for ParseErrorCode {
 #[derive(Debug)]
 pub struct FileData {
     path: String,
+    full_path: String,
     line: usize,
     column: usize,
 }
@@ -84,6 +106,10 @@ pub struct FileData {
 impl FileData {
     pub fn path(&self) -> &String {
         &self.path
+    }
+
+    pub fn full_path(&self) -> &String {
+        &self.full_path
     }
 
     pub fn line(&self) -> &usize {

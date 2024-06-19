@@ -12,7 +12,7 @@ impl DefineStore {
         self.defines.get(key)
     }
 
-    pub fn set_define(&mut self, key: &str, value: DefineDefinition) {
-        self.defines.insert(key.to_string(), value);
+    pub fn insert_define(&mut self, define: DefineDefinition) {
+        self.defines.insert(define.name().to_string(), define);
     }
 }

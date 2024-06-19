@@ -4,6 +4,10 @@ use super::PreprocessState;
 
 impl PreprocessState {
     pub fn process_file_path(&self, path: &str) -> PathBuf {
+        if let Some(current_directory) = self.environment().current_directory() {
+            return Path::new(current_directory).join(path);
+        }
+
         let env_dir = self.environment().working_directory();
 
         let file_dir;
@@ -18,11 +22,7 @@ impl PreprocessState {
             file_dir = ".".to_string();
         }
 
-        let current_dir = self.environment().current_directory();
-        let actual = Path::new(env_dir)
-            .join(file_dir)
-            .join(current_dir)
-            .join(path);
+        let actual = Path::new(env_dir).join(file_dir).join(path);
         actual
     }
 }

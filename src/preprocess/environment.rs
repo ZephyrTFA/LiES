@@ -1,14 +1,34 @@
 use std::{collections::VecDeque, path::Path, rc::Rc};
 
-use log::debug;
-
 use super::define::lib::DefineStore;
 
 pub struct EnvironmentData {
     working_directory: String,
     include_order: Vec<Rc<IncludeOrderEntry>>,
     defines: DefineStore,
-    current_file_queue: VecDeque<String>,
+    current_file_queue: VecDeque<CurrentFileEntry>,
+}
+
+pub struct CurrentFileEntry {
+    #[allow(dead_code)]
+    path: String,
+    full_path: String,
+}
+impl CurrentFileEntry {
+    pub fn new(path: &str, full_path: &str) -> Self {
+        Self {
+            path: path.to_string(),
+            full_path: full_path.to_string(),
+        }
+    }
+
+    pub fn path(&self) -> &str {
+        &self.path
+    }
+
+    pub fn full_path(&self) -> &str {
+        &self.full_path
+    }
 }
 
 impl EnvironmentData {
@@ -33,8 +53,8 @@ impl EnvironmentData {
         self.include_order.push(include)
     }
 
-    pub fn current_file(&self) -> Option<&str> {
-        self.current_file_queue.back().map(|string| string.as_str())
+    pub fn current_file(&self) -> Option<&CurrentFileEntry> {
+        self.current_file_queue.back()
     }
 
     pub fn defines(&self) -> &DefineStore {
@@ -45,25 +65,24 @@ impl EnvironmentData {
         &mut self.defines
     }
 
-    pub fn push_current_file(&mut self, file: &str) {
-        self.current_file_queue.push_back(file.to_string());
-        debug!("PuCF: {file}");
+    pub fn push_current_file(&mut self, entry: CurrentFileEntry) {
+        self.current_file_queue.push_back(entry);
     }
 
     pub fn pop_current_file(&mut self) {
         self.current_file_queue
             .pop_back()
             .expect("pop current file without active file");
-        debug!("PoCF");
     }
 
-    pub fn current_directory(&self) -> &str {
-        if let Some(current_file) = self.current_file() {
-            let as_path = Path::new(current_file);
-            let as_path = as_path.parent().unwrap();
-            return as_path.to_str().unwrap();
-        }
-        "."
+    pub fn current_directory(&self) -> Option<&str> {
+        self.current_file().map(|file| {
+            Path::new(file.full_path.as_str())
+                .parent()
+                .unwrap()
+                .to_str()
+                .unwrap()
+        })
     }
 }
 

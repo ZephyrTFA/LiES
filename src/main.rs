@@ -47,10 +47,10 @@ fn lies() -> bool {
         error!("\t{}", parse_error.to_string());
         if let Some(file_data) = parse_error.file_data() {
             error!(
-                "\tat {}:({},{})",
-                file_data.path(),
-                file_data.line(),
-                file_data.column(),
+                "\tat {}:{}:{}",
+                file_data.full_path(),
+                file_data.line() + 1, // line and columns references start at 1 not 0
+                file_data.column() + 1,
             );
         } else {
             error!("\\- at unknown location");

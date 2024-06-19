@@ -26,13 +26,13 @@ impl PreprocessState {
         let string_opening = string_opening.unwrap();
         if string_opening.value() != "\"" {
             return Err(ParseError::new(ParseErrorCode::ExpectedString)
-                .with_token(self.environment().current_file().unwrap(), &string_opening));
+                .with_preprocessor_state(self, &string_opening));
         }
 
         let tokens: Vec<Token> = tokens.take_while(|tok| tok.value() != "\"").collect();
         if tokens.is_empty() {
             return Err(ParseError::new(ParseErrorCode::MalformedString)
-                .with_token(self.environment().current_file().unwrap(), &string_opening));
+                .with_preprocessor_state(self, &string_opening));
         }
 
         let path = tokens

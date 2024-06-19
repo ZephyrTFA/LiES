@@ -1,6 +1,6 @@
 use std::iter::Peekable;
 
-use environment::EnvironmentData;
+use environment::{CurrentFileEntry, EnvironmentData};
 use line_processing::process_lines;
 
 use crate::{
@@ -17,13 +17,27 @@ pub mod string_tokens;
 
 pub struct PreprocessState {
     environment: EnvironmentData,
+    directive_skip_level: usize,
 }
 
 impl PreprocessState {
     pub fn new(working_directory: impl Into<String>) -> Self {
         Self {
             environment: EnvironmentData::new(working_directory.into()),
+            directive_skip_level: 0,
         }
+    }
+
+    pub fn directive_skip_level(&self) -> usize {
+        self.directive_skip_level
+    }
+
+    pub fn increment_directive_skip_level(&mut self) {
+        self.directive_skip_level += 1;
+    }
+
+    pub fn decrement_directive_skip_level(&mut self) {
+        self.directive_skip_level -= 1;
     }
 
     pub fn environment(&self) -> &EnvironmentData {
@@ -46,12 +60,13 @@ impl PreprocessState {
         let file = file.replace('\\', "/");
 
         let actual_path = self.process_file_path(&file);
-        self.environment_mut().push_current_file(&file);
+        self.environment_mut()
+            .push_current_file(CurrentFileEntry::new(&file, actual_path.to_str().unwrap()));
         let tokens = tokenize_file(&actual_path)?;
         let lines = process_lines(&tokens);
 
         // drop normal comments
-        let mut final_tokens: Vec<Vec<Token>> = vec![];
+        let mut final_raw: Vec<Vec<Token>> = vec![];
         for line in lines {
             let mut line_tokens = vec![];
             for token in line {
@@ -62,11 +77,12 @@ impl PreprocessState {
                 line_tokens.push(token.clone());
             }
             if !line_tokens.is_empty() {
-                final_tokens.push(line_tokens);
+                final_raw.push(line_tokens);
             }
         }
 
-        for mut line in final_tokens.iter().map(|tokens| tokens.iter().peekable()) {
+        let mut final_preprocessed = vec![];
+        for mut line in final_raw.iter().map(|tokens| tokens.iter().peekable()) {
             // consume all whitespace at the start
             while line.peek().is_some_and(|tok| tok.is_only_spacing()) {
                 line.next().unwrap();
@@ -75,7 +91,15 @@ impl PreprocessState {
             let mut line = self.do_define_replace(line).peekable();
             if line.peek().is_some_and(|tok| tok.value() == "#") {
                 self.do_directive(line)?;
+                // directives always consume the entire line
+                continue;
             }
+
+            if self.directive_skip_level() > 0 {
+                continue;
+            }
+
+            final_preprocessed.push(line);
         }
 
         self.environment_mut().pop_current_file();
