@@ -1,11 +1,14 @@
 use std::{fmt::Display, iter::Peekable};
 
+use log::{error, warn};
+
 use crate::{
     preprocess::PreprocessState,
     tokenize::token::Token,
     util::parse_error::{ParseError, ParseErrorCode},
 };
 
+#[derive(PartialEq, Eq)]
 enum Directive {
     Include,
     Warn,
@@ -72,17 +75,54 @@ impl PreprocessState {
 
         // special logic for directive while active skip level
         if self.directive_skip_level > 0 {
-            todo!("directive with skip level");
+            if self.directive_skip_level == 1 && directive == Directive::Else {
+                self.decrement_directive_skip_level();
+                return Ok(());
+            }
+            match directive {
+                Directive::EndIf => {
+                    self.decrement_directive_skip_level();
+                }
+                Directive::If | Directive::IfDef | Directive::IfNDef => {
+                    self.increment_directive_skip_level();
+                }
+                Directive::Define
+                | Directive::Warn
+                | Directive::Error
+                | Directive::Include
+                | Directive::Else => {}
+            }
+            return Ok(());
         }
 
         match directive {
             Directive::Include => self.handle_directive_include(tokens),
+            Directive::Warn => Ok(warn!(
+                "Compiler Warning: {}",
+                tokens
+                    .map(|tok| tok.value().clone())
+                    .collect::<Vec<String>>()
+                    .join("")
+            )),
+            Directive::Error => {
+                error!(
+                    "Compiler Warning: {}",
+                    tokens
+                        .map(|tok| tok.value().clone())
+                        .collect::<Vec<String>>()
+                        .join("")
+                );
+                Err(ParseError::new(ParseErrorCode::ForcedError))
+            }
             Directive::Define => self.handle_directive_define(tokens),
+            Directive::If => self.handle_directive_if(tokens),
+            Directive::IfDef => self.handle_directive_ifdef(tokens),
+            Directive::IfNDef => self.handle_directive_ifndef(tokens),
             Directive::Else => {
                 self.increment_directive_skip_level();
                 Ok(())
             }
-            _ => todo!("{}", directive),
+            Directive::EndIf => Ok(()),
         }
         .map_err(|err| err.with_preprocessor_state_if_not_set(self, &directive_token))?;
 

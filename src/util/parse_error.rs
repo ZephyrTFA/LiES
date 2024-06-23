@@ -1,4 +1,4 @@
-use std::fmt;
+use std::fmt::{self, Display};
 
 use crate::{preprocess::PreprocessState, tokenize::token::Token};
 
@@ -69,6 +69,7 @@ impl ParseError {
 }
 
 #[derive(Debug)]
+#[repr(usize)]
 pub enum ParseErrorCode {
     Internal = 1,
     Unknown = 2,
@@ -76,6 +77,16 @@ pub enum ParseErrorCode {
     ExpectedString = 4,
     MalformedString = 5,
     UnknownDirective = 6,
+    MalformedIf(IfMalformReason) = 7,
+    ForcedError = 8,
+    UnexpectedToken = 9,
+}
+
+#[derive(Debug)]
+pub enum IfMalformReason {
+    UnexpectedTokenAfterOperand,
+    FailedToParseAsInt,
+    ParsingStall,
 }
 
 impl fmt::Display for ParseErrorCode {
@@ -84,12 +95,29 @@ impl fmt::Display for ParseErrorCode {
             f,
             "{}",
             match self {
-                Self::Internal => "Internal",
-                Self::Unknown => "Unknown",
-                Self::UnexpectedEOL => "Unexpected end of line",
-                Self::ExpectedString => "Expected string",
-                Self::MalformedString => "Malformed string",
-                Self::UnknownDirective => "Unknown directive",
+                Self::Internal => "Internal".into(),
+                Self::Unknown => "Unknown".into(),
+                Self::UnexpectedEOL => "Unexpected end of line".into(),
+                Self::ExpectedString => "Expected string".into(),
+                Self::MalformedString => "Malformed string".into(),
+                Self::UnknownDirective => "Unknown directive".into(),
+                Self::MalformedIf(sub) => format!("Malformed #if: {sub}"),
+                Self::ForcedError => "Forced".into(),
+                Self::UnexpectedToken => "Unexpected token".into(),
+            }
+        )
+    }
+}
+
+impl Display for IfMalformReason {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::UnexpectedTokenAfterOperand => "UnexpectedTokenAfterOperand",
+                Self::FailedToParseAsInt => "FailedToParseAsInt",
+                Self::ParsingStall => "ParsingStall",
             }
         )
     }

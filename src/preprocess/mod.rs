@@ -1,11 +1,12 @@
-use std::iter::Peekable;
+use std::{cell::RefCell, iter::Peekable};
 
 use environment::{CurrentFileEntry, EnvironmentData};
 use line_processing::process_lines;
+use log::{error, warn};
 
 use crate::{
     tokenize::{lib::tokenize_file, token::Token},
-    util::parse_error::ParseError,
+    util::parse_error::{ParseError, ParseErrorCode},
 };
 
 pub mod define;
@@ -50,8 +51,20 @@ impl PreprocessState {
 
     fn do_define_replace<'a>(
         &self,
-        tokens: Peekable<impl Iterator<Item = &'a Token>>,
+        mut tokens: Peekable<impl Iterator<Item = &'a Token>>,
+        _is_directive: bool,
     ) -> impl Iterator<Item = Token> {
+        thread_local! {
+            static WARNED: RefCell<bool> = const { RefCell::new(false) };
+        }
+        WARNED.with(|warned| {
+            if *warned.borrow() {
+                return;
+            }
+            *warned.borrow_mut() = true;
+            warn!("define replacements are not implemented!");
+        });
+
         tokens.cloned()
     }
 
@@ -88,8 +101,9 @@ impl PreprocessState {
                 line.next().unwrap();
             }
 
-            let mut line = self.do_define_replace(line).peekable();
-            if line.peek().is_some_and(|tok| tok.value() == "#") {
+            let is_directive = line.peek().is_some_and(|tok| tok.value() == "#");
+            let line = self.do_define_replace(line, is_directive).peekable();
+            if is_directive {
                 self.do_directive(line)?;
                 // directives always consume the entire line
                 continue;
@@ -102,6 +116,10 @@ impl PreprocessState {
             final_preprocessed.push(line);
         }
 
+        if self.directive_skip_level != 0 {
+            error!("EOF with remaining directive skip level. Missing #endif?");
+            return Err(ParseError::new(ParseErrorCode::UnexpectedEOL));
+        }
         self.environment_mut().pop_current_file();
         Ok(())
     }
