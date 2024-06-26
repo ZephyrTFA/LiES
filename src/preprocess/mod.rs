@@ -1,8 +1,7 @@
-use std::{cell::RefCell, iter::Peekable};
-
+use define::definition::DefineDefinition;
 use environment::{CurrentFileEntry, EnvironmentData};
 use line_processing::process_lines;
-use log::{error, warn};
+use log::{debug, error};
 
 use crate::{
     tokenize::{lib::tokenize_file, token::Token},
@@ -49,23 +48,29 @@ impl PreprocessState {
         &mut self.environment
     }
 
-    fn do_define_replace<'a>(
-        &self,
-        mut tokens: Peekable<impl Iterator<Item = &'a Token>>,
-        _is_directive: bool,
-    ) -> impl Iterator<Item = Token> {
-        thread_local! {
-            static WARNED: RefCell<bool> = const { RefCell::new(false) };
-        }
-        WARNED.with(|warned| {
-            if *warned.borrow() {
-                return;
-            }
-            *warned.borrow_mut() = true;
-            warn!("define replacements are not implemented!");
-        });
+    fn do_define_replace(&self, mut tokens: Vec<&Token>, _is_directive: bool) -> Vec<Token> {
+        let defines = self.environment().defines();
+        let define_match_indexes: Vec<(usize, &DefineDefinition)> = tokens
+            .iter()
+            .enumerate()
+            .map(|(index, token)| (index, defines.get_define(token.value())))
+            .filter(|(_, define_option)| define_option.is_some())
+            .map(|(index, define_option)| (index, define_option.unwrap()))
+            .rev()
+            .collect();
 
-        tokens.cloned()
+        if define_match_indexes.is_empty() {
+            return tokens.into_iter().cloned().collect();
+        }
+
+        let mut splits = vec![];
+        for (replace, define) in define_match_indexes {
+            splits.push(tokens.split_off(replace));
+            splits.push(define.body().iter().collect());
+        }
+        splits.push(tokens);
+
+        splits.concat().into_iter().cloned().collect()
     }
 
     pub fn preprocess(&mut self, file: &str) -> Result<(), ParseError> {
@@ -102,9 +107,10 @@ impl PreprocessState {
             }
 
             let is_directive = line.peek().is_some_and(|tok| tok.value() == "#");
-            let line = self.do_define_replace(line, is_directive).peekable();
+            let line = self.do_define_replace(line.collect(), is_directive);
             if is_directive {
-                self.do_directive(line)?;
+                debug!("{line:?}");
+                self.do_directive(line.into_iter().peekable())?;
                 // directives always consume the entire line
                 continue;
             }

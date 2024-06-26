@@ -60,15 +60,24 @@ impl PreprocessState {
         &mut self,
         mut tokens: Peekable<impl Iterator<Item = Token>>,
     ) -> Result<(), ParseError> {
-        // assert, this is not a parsing error this is an implementation error
-        let pound_symbol = tokens.next().expect("do_directive without any tokens");
-        assert!(pound_symbol.value() == "#");
+        let init_token;
+        if let Some(initial) = tokens.next() {
+            if initial.value() != "#" {
+                error!("Attempting to parse directive without initial #?");
+                return Err(ParseError::new(ParseErrorCode::UnexpectedToken)
+                    .with_preprocessor_state(self, &initial));
+            }
+            init_token = initial;
+        } else {
+            error!("Attempting to parse directive with no remaining tokens!");
+            return Err(ParseError::new(ParseErrorCode::Internal));
+        }
 
         // grab the directive
         let directive = tokens.next();
         if directive.is_none() {
             return Err(ParseError::new(ParseErrorCode::UnexpectedEOL)
-                .with_preprocessor_state(self, &pound_symbol));
+                .with_preprocessor_state(self, &init_token));
         }
         let directive_token = directive.unwrap();
         let directive = Directive::try_from(&directive_token)?;

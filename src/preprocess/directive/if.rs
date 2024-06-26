@@ -1,6 +1,6 @@
 use std::iter::Peekable;
 
-use log::debug;
+use log::{debug, error};
 
 use crate::{
     preprocess::PreprocessState,
@@ -10,14 +10,13 @@ use crate::{
 
 use super::DirectiveResult;
 
-macro_rules! must_parse_as_int {
-    ($value: expr) => {
-        $value.parse::<i32>().map_err(|_| {
-            ParseError::new(ParseErrorCode::MalformedIf(
-                IfMalformReason::FailedToParseAsInt,
-            ))
-        })?
-    };
+fn must_parse_as_int(value: &str) -> Result<i32, ParseError> {
+    value.parse::<i32>().map_err(|_| {
+        error!("Failed to parse `{value}` as i32.");
+        ParseError::new(ParseErrorCode::MalformedIf(
+            IfMalformReason::FailedToParseAsInt,
+        ))
+    })
 }
 
 const CMP_EQ: &str = "==";
@@ -116,8 +115,8 @@ impl PreprocessState {
                     macro_rules! get_lhs_and_rhs {
                         () => {
                             (
-                                must_parse_as_int!(must_get_previous!()),
-                                must_parse_as_int!(must_get_next!()),
+                                must_parse_as_int(must_get_previous!())?,
+                                must_parse_as_int(must_get_next!())?,
                             )
                         };
                     }
@@ -139,7 +138,7 @@ impl PreprocessState {
                             current_run.remove(index);
 
                             did_something = true;
-                            current_run[index] = if must_parse_as_int!(current_run[index]) != 0 {
+                            current_run[index] = if must_parse_as_int(current_run[index])? != 0 {
                                 "0"
                             } else {
                                 "1"
@@ -168,13 +167,21 @@ impl PreprocessState {
                             let (lhs, rhs) = get_lhs_and_rhs!();
                             replace_with_result!(if lhs > rhs { "1" } else { "0" });
                         }
-                        _ => unreachable!(),
+                        CMP_LT => {
+                            skip_if_parenthesis!();
+                            let (lhs, rhs) = get_lhs_and_rhs!();
+                            replace_with_result!(if lhs < rhs { "1" } else { "0" });
+                        }
+                        _ => {
+                            error!("unimplemented: {operation}");
+                            return Err(ParseError::new(ParseErrorCode::Internal));
+                        }
                     }
                 }
             }
 
             if current_run.len() == 1 {
-                if must_parse_as_int!(current_run[0]) == 0 {
+                if must_parse_as_int(current_run[0])? == 0 {
                     self.increment_directive_skip_level()
                 }
                 return Ok(());
