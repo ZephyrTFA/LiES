@@ -1,6 +1,6 @@
 use std::{collections::VecDeque, path::Path, rc::Rc};
 
-use super::define::lib::DefineStore;
+use super::define::lib::{stddef_defines, DefineStore};
 
 pub struct EnvironmentData {
     working_directory: String,
@@ -40,11 +40,18 @@ impl EnvironmentData {
         &self.include_order
     }
 
-    pub fn new(working_directory: String) -> Self {
+    pub fn new(working_directory: String, include_stddef: bool) -> Self {
+        let mut defines = DefineStore::default();
+        if include_stddef {
+            for define in stddef_defines() {
+                defines.insert_define(define);
+            }
+        }
+
         Self {
             working_directory,
             include_order: vec![],
-            defines: DefineStore::default(),
+            defines,
             current_file_queue: VecDeque::default(),
         }
     }

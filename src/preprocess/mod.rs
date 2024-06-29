@@ -1,7 +1,9 @@
+use std::collections::VecDeque;
+
 use define::definition::DefineDefinition;
 use environment::{CurrentFileEntry, EnvironmentData};
 use line_processing::process_lines;
-use log::{debug, error};
+use log::error;
 
 use crate::{
     tokenize::{lib::tokenize_file, token::Token},
@@ -21,9 +23,9 @@ pub struct PreprocessState {
 }
 
 impl PreprocessState {
-    pub fn new(working_directory: impl Into<String>) -> Self {
+    pub fn new(working_directory: impl Into<String>, include_stddef: bool) -> Self {
         Self {
-            environment: EnvironmentData::new(working_directory.into()),
+            environment: EnvironmentData::new(working_directory.into(), include_stddef),
             directive_skip_level: 0,
         }
     }
@@ -48,7 +50,7 @@ impl PreprocessState {
         &mut self.environment
     }
 
-    fn do_define_replace(&self, mut tokens: Vec<&Token>, _is_directive: bool) -> Vec<Token> {
+    fn do_define_replace(&self, mut tokens: VecDeque<Token>) -> VecDeque<Token> {
         let defines = self.environment().defines();
         let define_match_indexes: Vec<(usize, &DefineDefinition)> = tokens
             .iter()
@@ -60,17 +62,18 @@ impl PreprocessState {
             .collect();
 
         if define_match_indexes.is_empty() {
-            return tokens.into_iter().cloned().collect();
+            return tokens;
         }
 
-        let mut splits = vec![];
+        let mut splits: Vec<Vec<Token>> = vec![];
         for (replace, define) in define_match_indexes {
-            splits.push(tokens.split_off(replace));
-            splits.push(define.body().iter().collect());
+            let right_side = tokens.split_off(replace);
+            splits.push(right_side.into_iter().skip(1).collect());
+            splits.push(define.body().clone());
         }
-        splits.push(tokens);
-
-        splits.concat().into_iter().cloned().collect()
+        splits.push(tokens.into());
+        splits.reverse();
+        splits.concat().into_iter().collect()
     }
 
     pub fn preprocess(&mut self, file: &str) -> Result<(), ParseError> {
@@ -84,7 +87,7 @@ impl PreprocessState {
         let lines = process_lines(&tokens);
 
         // drop normal comments
-        let mut final_raw: Vec<Vec<Token>> = vec![];
+        let mut final_raw: Vec<VecDeque<Token>> = vec![];
         for line in lines {
             let mut line_tokens = vec![];
             for token in line {
@@ -95,23 +98,19 @@ impl PreprocessState {
                 line_tokens.push(token.clone());
             }
             if !line_tokens.is_empty() {
-                final_raw.push(line_tokens);
+                final_raw.push(line_tokens.into());
             }
         }
 
         let mut final_preprocessed = vec![];
-        for mut line in final_raw.iter().map(|tokens| tokens.iter().peekable()) {
+        for mut line in final_raw {
             // consume all whitespace at the start
-            while line.peek().is_some_and(|tok| tok.is_only_spacing()) {
-                line.next().unwrap();
+            while line.front().is_some_and(|tok| tok.is_only_spacing()) {
+                line.pop_front();
             }
 
-            let is_directive = line.peek().is_some_and(|tok| tok.value() == "#");
-            let line = self.do_define_replace(line.collect(), is_directive);
-            if is_directive {
-                debug!("{line:?}");
-                self.do_directive(line.into_iter().peekable())?;
-                // directives always consume the entire line
+            if !line.front().is_some_and(|tok| tok.value() == "#") {
+                self.do_directive(line)?;
                 continue;
             }
 
@@ -119,6 +118,7 @@ impl PreprocessState {
                 continue;
             }
 
+            line = self.do_define_replace(line);
             final_preprocessed.push(line);
         }
 

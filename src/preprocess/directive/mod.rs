@@ -6,5 +6,6 @@ pub mod ifdef;
 pub mod ifndef;
 pub mod include;
 pub mod lib;
+pub mod r#macro;
 
 type DirectiveResult = Result<(), ParseError>;

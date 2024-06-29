@@ -1,4 +1,4 @@
-use std::iter::Peekable;
+use std::collections::VecDeque;
 
 use log::{debug, error};
 
@@ -34,11 +34,8 @@ const ORDER_OPS: [&str; 10] = [
 ];
 
 impl PreprocessState {
-    pub(super) fn handle_directive_if(
-        &mut self,
-        tokens: Peekable<impl Iterator<Item = Token>>,
-    ) -> DirectiveResult {
-        let current_run: Vec<Token> = tokens.collect();
+    pub(super) fn handle_directive_if(&mut self, tokens: VecDeque<Token>) -> DirectiveResult {
+        let current_run: Vec<Token> = tokens.into_iter().collect();
         let mut current_run: Vec<&str> = current_run
             .iter()
             .filter(|tok| !tok.is_only_spacing())

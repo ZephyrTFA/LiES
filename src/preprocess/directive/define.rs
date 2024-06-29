@@ -1,4 +1,4 @@
-use std::iter::Peekable;
+use std::collections::VecDeque;
 
 use crate::{
     preprocess::{define::definition::DefineDefinition, PreprocessState},
@@ -11,28 +11,31 @@ use super::DirectiveResult;
 impl PreprocessState {
     pub(super) fn handle_directive_define(
         &mut self,
-        mut tokens: Peekable<impl Iterator<Item = Token>>,
+        mut tokens: VecDeque<Token>,
     ) -> DirectiveResult {
         // consume whitespace
-        while tokens.peek().is_some_and(|next| next.is_only_spacing()) {
-            tokens.next();
+        while tokens.front().is_some_and(|next| next.is_only_spacing()) {
+            tokens.pop_front();
         }
 
-        let define_name = tokens.next();
+        let define_name = tokens.pop_front().map(|tok| tok.value().clone());
         if define_name.is_none() {
             return Err(ParseError::new(ParseErrorCode::UnexpectedEOL));
         }
         let define_name = define_name.unwrap();
 
-        if tokens.peek().is_some_and(|token| token.value() == "(") {
-            todo!("macro parsing");
+        if tokens.front().is_some_and(|token| token.value() == "(") {
+            return self.handle_define_macro(tokens);
         }
 
+        while tokens.front().is_some_and(|next| next.is_only_spacing()) {
+            tokens.pop_front();
+        }
         self.environment_mut()
             .defines_mut()
             .insert_define(DefineDefinition::new_define(
-                define_name.value(),
-                tokens.collect(),
+                &define_name,
+                tokens.into_iter().collect(),
             ));
         Ok(())
     }

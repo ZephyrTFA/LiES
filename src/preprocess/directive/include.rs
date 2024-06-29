@@ -1,4 +1,4 @@
-use std::iter::Peekable;
+use std::collections::VecDeque;
 
 use crate::{
     preprocess::PreprocessState,
@@ -11,14 +11,14 @@ use super::DirectiveResult;
 impl PreprocessState {
     pub(super) fn handle_directive_include(
         &mut self,
-        mut tokens: Peekable<impl Iterator<Item = Token>>,
+        mut tokens: VecDeque<Token>,
     ) -> DirectiveResult {
         // get rid of whitespace
-        while tokens.peek().is_some_and(|tok| tok.is_only_spacing()) {
-            tokens.next().unwrap();
+        while tokens.front().is_some_and(|tok| tok.is_only_spacing()) {
+            tokens.pop_front().unwrap();
         }
 
-        let string_opening = tokens.next();
+        let string_opening = tokens.pop_front();
         if string_opening.is_none() {
             return Err(ParseError::new(ParseErrorCode::UnexpectedEOL));
         }
@@ -29,7 +29,10 @@ impl PreprocessState {
                 .with_preprocessor_state(self, &string_opening));
         }
 
-        let tokens: Vec<Token> = tokens.take_while(|tok| tok.value() != "\"").collect();
+        let tokens: Vec<Token> = tokens
+            .into_iter()
+            .take_while(|tok| tok.value() != "\"")
+            .collect();
         if tokens.is_empty() {
             return Err(ParseError::new(ParseErrorCode::MalformedString)
                 .with_preprocessor_state(self, &string_opening));

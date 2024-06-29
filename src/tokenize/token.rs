@@ -33,6 +33,16 @@ impl Token {
     }
 }
 
+impl From<&str> for Token {
+    fn from(value: &str) -> Self {
+        Self {
+            line: 0,
+            column: 0,
+            value: value.to_string(),
+        }
+    }
+}
+
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)

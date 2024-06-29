@@ -31,7 +31,7 @@ fn lies() -> bool {
     let game_dir = env::var("GAME_DIR").expect("GAME_DIR not set.");
     let dme_file = env::var("DME_FILE").expect("DME_FILE not set.");
 
-    let mut parser = preprocess::PreprocessState::new(&game_dir);
+    let mut parser = preprocess::PreprocessState::new(&game_dir, true);
     let entry_path = Path::new(&game_dir).join(&dme_file);
     let entry_path = entry_path
         .to_str()
@@ -43,8 +43,7 @@ fn lies() -> bool {
         info!("Success.");
     } else {
         let parse_error = result.as_ref().err().unwrap();
-        error!("Error while parsing:");
-        error!("\t{}", parse_error.to_string());
+        error!("Error while parsing: {}", parse_error.to_string());
         if let Some(file_data) = parse_error.file_data() {
             error!(
                 "\tat {}:{}:{}",

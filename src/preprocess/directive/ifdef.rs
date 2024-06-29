@@ -1,4 +1,4 @@
-use std::iter::Peekable;
+use std::collections::VecDeque;
 
 use crate::{preprocess::PreprocessState, tokenize::token::Token};
 
@@ -7,13 +7,13 @@ use super::DirectiveResult;
 impl PreprocessState {
     pub(super) fn handle_directive_ifdef(
         &mut self,
-        mut tokens: Peekable<impl Iterator<Item = Token>>,
+        mut tokens: VecDeque<Token>,
     ) -> DirectiveResult {
-        while tokens.peek().is_some_and(|tok| tok.is_only_spacing()) {
-            tokens.next();
+        while tokens.front().is_some_and(|tok| tok.is_only_spacing()) {
+            tokens.pop_front();
         }
 
-        let define_name = tokens.next().unwrap();
+        let define_name = tokens.pop_front().unwrap();
         if self
             .environment()
             .defines()

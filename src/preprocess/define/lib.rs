@@ -16,3 +16,10 @@ impl DefineStore {
         self.defines.insert(define.name().to_string(), define);
     }
 }
+
+pub fn stddef_defines() -> Vec<DefineDefinition> {
+    vec![
+        DefineDefinition::new_define("DM_VERSION", vec!["515".into()]),
+        DefineDefinition::new_define("DM_BUILD", vec!["1627".into()]),
+    ]
+}
