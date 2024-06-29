@@ -169,6 +169,11 @@ impl PreprocessState {
                             let (lhs, rhs) = get_lhs_and_rhs!();
                             replace_with_result!(if lhs < rhs { "1" } else { "0" });
                         }
+                        CMP_GTE => {
+                            skip_if_parenthesis!();
+                            let (lhs, rhs) = get_lhs_and_rhs!();
+                            replace_with_result!(if lhs >= rhs { "1" } else { "0" });
+                        }
                         _ => {
                             error!("unimplemented: {operation}");
                             return Err(ParseError::new(ParseErrorCode::Internal));

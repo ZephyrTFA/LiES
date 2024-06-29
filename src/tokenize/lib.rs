@@ -6,7 +6,7 @@ use crate::util::parse_error::{ParseError, ParseErrorCode};
 
 use super::token::{FileTokens, Token};
 
-const MATH_OPERATORS: [char; 7] = ['+', '-', '/', '*', '=', '^', '|'];
+const MATH_OPERATORS: [char; 9] = ['+', '-', '/', '*', '=', '^', '|', '>', '<'];
 
 fn is_ident_char(c: char) -> bool {
     c == '_' || c.is_alphanumeric()

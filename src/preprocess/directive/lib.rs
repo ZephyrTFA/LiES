@@ -14,7 +14,9 @@ enum Directive {
     Warn,
     Error,
     Define,
+    Undef,
     If,
+    Elif,
     IfDef,
     IfNDef,
     Else,
@@ -28,7 +30,9 @@ impl Display for Directive {
             Self::Warn => write!(f, "#warn"),
             Self::Error => write!(f, "#error"),
             Self::Define => write!(f, "#define"),
+            Self::Undef => write!(f, "#undef"),
             Self::If => write!(f, "#if"),
+            Self::Elif => write!(f, "#elif"),
             Self::IfDef => write!(f, "#ifdef"),
             Self::IfNDef => write!(f, "#ifndef"),
             Self::Else => write!(f, "#else"),
@@ -46,10 +50,12 @@ impl<'a> TryFrom<&'a Token> for Directive {
             "warn" => Self::Warn,
             "error" => Self::Error,
             "define" => Self::Define,
+            "undef" => Self::Undef,
             "if" => Self::If,
             "ifdef" => Self::IfDef,
             "ifndef" => Self::IfNDef,
             "else" => Self::Else,
+            "elif" => Self::Elif,
             "endif" => Self::EndIf,
             _ => {
                 error!("unknown directive `{value}`");
@@ -93,9 +99,40 @@ impl PreprocessState {
         let directive_token = directive.unwrap();
         let directive = Directive::try_from(&directive_token)?;
 
+        // special logic for directive while active skip level
+        if self.directive_skip_level > 0 {
+            if self.directive_skip_level == 1 && directive == Directive::Else {
+                self.decrement_directive_skip_level();
+                return Ok(());
+            }
+            match directive {
+                Directive::Else if self.directive_skip_level == 1 => {
+                    self.decrement_directive_skip_level();
+                }
+                Directive::Elif if self.directive_skip_level == 1 => {
+                    self.decrement_directive_skip_level();
+                    self.handle_directive_if(self.do_define_replace(tokens))?;
+                }
+                Directive::EndIf => {
+                    self.decrement_directive_skip_level();
+                }
+                Directive::If | Directive::IfDef | Directive::IfNDef => {
+                    self.increment_directive_skip_level();
+                }
+                Directive::Define
+                | Directive::Undef
+                | Directive::Warn
+                | Directive::Error
+                | Directive::Elif
+                | Directive::Else
+                | Directive::Include => {}
+            }
+            return Ok(());
+        }
+
         // special logic to check for defined(XXX)
         for index in tokens
-            .iter_mut()
+            .iter()
             .enumerate()
             .filter(|tok| tok.1.value() == "defined")
             .map(|(index, _)| index)
@@ -122,26 +159,12 @@ impl PreprocessState {
             }
         }
 
-        // special logic for directive while active skip level
-        if self.directive_skip_level > 0 {
-            if self.directive_skip_level == 1 && directive == Directive::Else {
-                self.decrement_directive_skip_level();
-                return Ok(());
-            }
-            match directive {
-                Directive::EndIf => {
-                    self.decrement_directive_skip_level();
-                }
-                Directive::If | Directive::IfDef | Directive::IfNDef => {
-                    self.increment_directive_skip_level();
-                }
-                Directive::Define
-                | Directive::Warn
-                | Directive::Error
-                | Directive::Include
-                | Directive::Else => {}
-            }
-            return Ok(());
+        // replace remaining defines, except for if(n)def
+        if !matches!(
+            directive,
+            Directive::IfNDef | Directive::IfDef | Directive::Undef | Directive::Define
+        ) {
+            tokens = self.do_define_replace(tokens);
         }
 
         match directive {
@@ -166,10 +189,15 @@ impl PreprocessState {
                 Err(ParseError::new(ParseErrorCode::ForcedError))
             }
             Directive::Define => self.handle_directive_define(tokens),
+            Directive::Undef => self.handle_define_undef(tokens),
             Directive::If => self.handle_directive_if(tokens),
             Directive::IfDef => self.handle_directive_ifdef(tokens),
             Directive::IfNDef => self.handle_directive_ifndef(tokens),
             Directive::Else => {
+                self.increment_directive_skip_level();
+                Ok(())
+            }
+            Directive::Elif => {
                 self.increment_directive_skip_level();
                 Ok(())
             }

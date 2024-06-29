@@ -3,6 +3,7 @@ use std::fmt::Display;
 #[derive(Debug, Clone)]
 pub struct Token {
     value: String,
+    is_in_string_literal: bool,
     line: usize,
     column: usize,
 }
@@ -20,9 +21,14 @@ impl Token {
         self.column
     }
 
-    pub fn new(value: String, line: usize, column: usize) -> Self {
+    pub fn is_in_string_literal(&self) -> bool {
+        self.is_in_string_literal
+    }
+
+    pub fn new(value: String, is_in_string_literal: bool, line: usize, column: usize) -> Self {
         Self {
             value,
+            is_in_string_literal,
             line,
             column,
         }
@@ -38,6 +44,7 @@ impl From<&str> for Token {
         Self {
             line: 0,
             column: 0,
+            is_in_string_literal: false,
             value: value.to_string(),
         }
     }

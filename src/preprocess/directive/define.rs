@@ -9,6 +9,25 @@ use crate::{
 use super::DirectiveResult;
 
 impl PreprocessState {
+    pub(super) fn handle_define_undef(&mut self, mut tokens: VecDeque<Token>) -> DirectiveResult {
+        // consume whitespace
+        while tokens.front().is_some_and(|next| next.is_only_spacing()) {
+            tokens.pop_front();
+        }
+
+        let name_token = tokens.pop_front();
+        if name_token.is_none() {
+            return Err(ParseError::new(ParseErrorCode::UnexpectedEOL));
+        }
+        let name_token = name_token.unwrap();
+        let define_name = name_token.value();
+
+        self.environment_mut()
+            .defines_mut()
+            .remove_define(define_name);
+        Ok(())
+    }
+
     pub(super) fn handle_directive_define(
         &mut self,
         mut tokens: VecDeque<Token>,

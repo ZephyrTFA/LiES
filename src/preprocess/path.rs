@@ -8,8 +8,6 @@ impl PreprocessState {
             return Path::new(current_directory).join(path);
         }
 
-        let env_dir = self.environment().working_directory();
-
         let file_dir;
         if let Some(define_file_dir) = self.environment().defines().get_define("FILE_DIR") {
             file_dir = define_file_dir
@@ -22,7 +20,9 @@ impl PreprocessState {
             file_dir = ".".to_string();
         }
 
-        let actual = Path::new(env_dir).join(file_dir).join(path);
+        let actual = Path::new(self.environment().working_directory())
+            .join(file_dir)
+            .join(path);
         actual
     }
 }

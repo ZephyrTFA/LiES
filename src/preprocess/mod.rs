@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use define::definition::DefineDefinition;
 use environment::{CurrentFileEntry, EnvironmentData};
 use line_processing::process_lines;
-use log::error;
+use log::{error, info, trace};
 
 use crate::{
     tokenize::{lib::tokenize_file, token::Token},
@@ -50,30 +50,38 @@ impl PreprocessState {
         &mut self.environment
     }
 
-    fn do_define_replace(&self, mut tokens: VecDeque<Token>) -> VecDeque<Token> {
+    fn get_define_positions_in_tokens(
+        &self,
+        tokens: &VecDeque<Token>,
+    ) -> Vec<(usize, &DefineDefinition)> {
         let defines = self.environment().defines();
-        let define_match_indexes: Vec<(usize, &DefineDefinition)> = tokens
+        tokens
             .iter()
             .enumerate()
+            .filter(|(_, token)| !token.is_in_string_literal())
             .map(|(index, token)| (index, defines.get_define(token.value())))
             .filter(|(_, define_option)| define_option.is_some())
             .map(|(index, define_option)| (index, define_option.unwrap()))
             .rev()
-            .collect();
+            .collect()
+    }
 
-        if define_match_indexes.is_empty() {
-            return tokens;
+    fn do_define_replace(&self, mut tokens: VecDeque<Token>) -> VecDeque<Token> {
+        let mut define_match_indexes = self.get_define_positions_in_tokens(&tokens);
+        while !define_match_indexes.is_empty() {
+            let mut splits: Vec<Vec<Token>> = vec![];
+            for (replace, define) in define_match_indexes {
+                let right_side = tokens.split_off(replace);
+                splits.push(right_side.into_iter().skip(1).collect());
+                splits.push(define.body().clone());
+            }
+            splits.push(tokens.into());
+            splits.reverse();
+            tokens = splits.concat().into_iter().collect();
+            define_match_indexes = self.get_define_positions_in_tokens(&tokens);
         }
 
-        let mut splits: Vec<Vec<Token>> = vec![];
-        for (replace, define) in define_match_indexes {
-            let right_side = tokens.split_off(replace);
-            splits.push(right_side.into_iter().skip(1).collect());
-            splits.push(define.body().clone());
-        }
-        splits.push(tokens.into());
-        splits.reverse();
-        splits.concat().into_iter().collect()
+        tokens
     }
 
     pub fn preprocess(&mut self, file: &str) -> Result<(), ParseError> {
@@ -102,14 +110,26 @@ impl PreprocessState {
             }
         }
 
+        info!("Parsing: {actual_path:?}");
+        if file == "code/_globalvars/traits/_traits.dm" {
+            trace!("bp");
+        }
+
         let mut final_preprocessed = vec![];
+        let mut cidx = 0; // testing
         for mut line in final_raw {
+            cidx += 1;
+
+            if cidx == 3 {
+                trace!("bp");
+            }
+
             // consume all whitespace at the start
             while line.front().is_some_and(|tok| tok.is_only_spacing()) {
                 line.pop_front();
             }
 
-            if !line.front().is_some_and(|tok| tok.value() == "#") {
+            if line.front().is_some_and(|tok| tok.value() == "#") {
                 self.do_directive(line)?;
                 continue;
             }
